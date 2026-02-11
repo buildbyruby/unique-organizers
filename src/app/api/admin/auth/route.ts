@@ -1,33 +1,22 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers'; // Import this
+import { cookies } from 'next/headers';
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const { password } = body;
+  const { password } = await req.json();
+
+  if (password === process.env.ADMIN_PASSWORD) {
+    const cookieStore = await cookies();
     
-    const adminPassword = process.env.ADMIN_PASSWORD;
+    cookieStore.set('admin_token', 'active', {
+      httpOnly: true,
+      secure: false, // Set to false for local testing so Chrome doesn't block it
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24, // 1 day
+      path: '/',
+    });
 
-    if (password === adminPassword) {
-      // 1. Get the cookie store
-      const cookieStore = await cookies();
-
-      // 2. Set the cookie directly on the store
-      cookieStore.set('admin_session', 'true', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax', // 'lax' is safer for redirects than 'strict'
-        maxAge: 60 * 60 * 24, // 24 hours
-        path: '/',
-      });
-
-      // 3. Return a standard response
-      return NextResponse.json({ success: true });
-    } else {
-      return NextResponse.json({ success: false }, { status: 401 });
-    }
-  } catch (error) {
-    console.error("Auth error:", error);
-    return NextResponse.json({ success: false }, { status: 500 });
+    return NextResponse.json({ success: true });
   }
+
+  return NextResponse.json({ success: false }, { status: 401 });
 }
