@@ -16,19 +16,18 @@ export async function POST(req: Request) {
     }
 
     // 2. Create Order in Database
+    // 2. Create Order in Database
     const accountRef = `ORD-${Math.random().toString(36).toUpperCase().substring(2, 10)}`
     
     const order = await prisma.order.create({
       data: {
         accountReference: accountRef,
-        // If userId exists, we connect it to the User model
-        // If not, we leave it undefined so Prisma doesn't complain
-        ...(userId ? { user: { connect: { id: userId } } } : {}),
-        
-        phoneNumber: phoneNumber, // This was the missing required field!
+        phoneNumber: phoneNumber,
         totalAmount: product.retailPrice,
         status: 'PENDING',
         paymentStatus: 'CREATED',
+        // Use the direct ID field if your schema allows, or connect safely
+        userId: userId || undefined, 
         items: {
           create: {
             productId: product.id,
