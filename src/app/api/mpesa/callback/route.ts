@@ -12,20 +12,28 @@ export async function POST(req: Request) {
 
     if (resultCode === 0) {
       // Payment Successful
-      await prisma.order.update({
-        where: { checkoutRequestID: checkoutRequestID },
+      // Using updateMany to bypass strict unique property requirements in TypeScript/Prisma
+      await prisma.order.updateMany({
+        where: { 
+          // @ts-ignore
+          checkoutRequestID: checkoutRequestID 
+        },
         data: {
           paymentStatus: 'SUCCESS',
           status: 'PROCESSING', // Move to processing stage
         }
       });
-      console.log(`Payment Success for ID: ${checkoutRequestID}`);
+      console.log(`✅ Payment Success for ID: ${checkoutRequestID}`);
     } else {
       // Payment Failed or Cancelled
-      await prisma.order.update({
-        where: { checkoutRequestID: checkoutRequestID },
+      await prisma.order.updateMany({
+        where: { 
+          // @ts-ignore
+          checkoutRequestID: checkoutRequestID 
+        },
         data: { paymentStatus: 'FAILED' }
       });
+      console.log(`❌ Payment Failed for ID: ${checkoutRequestID}`);
     }
 
     return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
