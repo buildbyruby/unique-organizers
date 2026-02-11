@@ -1,10 +1,17 @@
+// 1. This line makes the file a "module" so it doesn't conflict globally
+export {}; 
+
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
+// 2. We use 'seedPrisma' instead of 'prisma' to avoid redeclaration errors
+const seedPrisma = new PrismaClient();
 
 async function main() {
+  console.log("Starting seed process...");
+  
   // Clear existing data
-  await prisma.orderItem.deleteMany({});
-  await prisma.product.deleteMany({});
+  await seedPrisma.orderItem.deleteMany({});
+  await seedPrisma.product.deleteMany({});
 
   const products = [
     {
@@ -55,12 +62,19 @@ async function main() {
   ];
 
   for (const product of products) {
-    await prisma.product.create({ data: product });
+    // 3. Make sure to use 'seedPrisma' here too
+    await seedPrisma.product.create({ data: product });
   }
 
   console.log("Database seeded successfully!");
 }
 
 main()
-  .catch((e) => console.error(e))
-  .finally(async () => await prisma.$disconnect());
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    // 4. And here
+    await seedPrisma.$disconnect();
+  });
