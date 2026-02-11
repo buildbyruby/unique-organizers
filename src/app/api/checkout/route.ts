@@ -15,13 +15,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
-    // 2. Create Order in Database (PENDING)
+    // 2. Create Order in Database
     const accountRef = `ORD-${Math.random().toString(36).toUpperCase().substring(2, 10)}`
     
     const order = await prisma.order.create({
       data: {
         accountReference: accountRef,
-        userId: userId || null,
+        // If userId exists, we connect it to the User model
+        // If not, we leave it undefined so Prisma doesn't complain
+        ...(userId ? { user: { connect: { id: userId } } } : {}),
+        
+        phoneNumber: phoneNumber, // This was the missing required field!
         totalAmount: product.retailPrice,
         status: 'PENDING',
         paymentStatus: 'CREATED',
@@ -43,7 +47,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ 
       success: true, 
       orderId: order.id, 
-      checkoutRequestId: mpesaResponse.CheckoutRequestID 
+      checkoutRequestId: mpesaResponse?.CheckoutRequestID || 'N/A'
     })
 
   } catch (error: any) {
