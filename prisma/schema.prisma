@@ -1,78 +1,70 @@
-generator client {
-  provider = "prisma-client-js"
-}
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String?
-  role      String   @default("CUSTOMER")
-  orders    Order[]
-  createdAt DateTime @default(now())
-}
+    const {
+      userId,
+      amount,
+      phoneNumber,
+      accountReference,
+      items,
+    } = body;
 
-model Product {
-  id             String      @id @default(cuid())
-  name           String
-  description    String
-  images         String[]
-  category       String
-  retailPrice    Float
-  wholesalePrice Float       @default(0)
-  colors         String[]    
-  inStock        Boolean     @default(true) // <--- Add this line
-  items          OrderItem[] 
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-}
+    // Basic validation
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
 
-model Order {
-  id               String        @id @default(cuid())
-  userId           String
-  user             User          @relation(fields: [userId], references: [id])
-  totalAmount      Float
-  phoneNumber      String
-  accountReference String        @unique
-  status           OrderStatus   @default(PENDING)
-  paymentStatus    PaymentStatus @default(INITIATED)
-  items            OrderItem[]
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-}
+    if (!items || items.length === 0) {
+      return NextResponse.json(
+        { error: "Order must contain at least one item" },
+        { status: 400 }
+      );
+    }
 
-model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String
-  order     Order   @relation(fields: [orderId], references: [id])
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
-  quantity  Int
-  price     Float
-  color     String?
-}
+    const order = await prisma.order.create({
+      data: {
+        totalAmount: amount,
+        phoneNumber,
+        accountReference,
+        status: "PENDING",
+        paymentStatus: "INITIATED",
 
-enum OrderStatus {
-  PENDING
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
-}
+        // ✅ REQUIRED RELATION
+        user: {
+          connect: { id: userId },
+        },
 
-enum PaymentStatus {
-  CREATED
-  INITIATED
-  SUCCESS
-  FAILED
-}
+        // ✅ Create multiple order items
+        items: {
+          create: items.map((item: any) => ({
+            product: {
+              connect: { id: item.productId },
+            },
+            quantity: item.quantity,
+            price: item.price,
+            color: item.color ?? null,
+          })),
+        },
+      },
+      include: {
+        items: true,
+      },
+    });
 
-enum PaymentMethod {
-  MPESA_STK
-  MPESA_PAYBILL
+    return NextResponse.json(order);
+  } catch (error) {
+    console.error("ORDER CREATION ERROR:", error);
+
+    return NextResponse.json(
+      { error: "Failed to create order" },
+      { status: 500 }
+    );
+  }
 }
