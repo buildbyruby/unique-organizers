@@ -4,19 +4,20 @@ import prisma from '@/lib/prisma'
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { productId, quantity, totalAmount, phoneNumber, accountReference, color } = body
+    const { productId, quantity, totalAmount, phoneNumber, accountReference } = body
 
-    // 1. Ensure numeric values (Prisma 'Float' and 'Int' require actual numbers)
+    // 1. Validate numbers (Prisma expects Floats/Ints, not strings)
     const amount = parseFloat(totalAmount) || 0
     const qty = parseInt(quantity) || 1
 
     // 2. Create the order
+    // Since userId is optional in your schema (User?), 
+    // we simply don't pass it for guest checkouts.
     const order = await prisma.order.create({
       data: {
-        // Since userId is optional in your schema, we can simply omit it for guests
-        accountReference: accountReference || `REC-${Math.random().toString(36).slice(2, 9).toUpperCase()}`,
-        phoneNumber: phoneNumber || "0000000000",
         totalAmount: amount,
+        phoneNumber: phoneNumber || "0000000000",
+        accountReference: accountReference || `ORD-${Math.random().toString(36).slice(2, 7).toUpperCase()}`,
         status: 'PENDING',
         paymentStatus: 'INITIATED',
         items: {
@@ -24,20 +25,18 @@ export async function POST(req: Request) {
             productId: productId,
             quantity: qty,
             price: amount,
-            color: color || null,
           }
         }
       }
     })
 
-    return NextResponse.json({ success: true, orderId: order.id }, { status: 201 })
+    return NextResponse.json({ success: true, orderId: order.id })
 
   } catch (error: any) {
-    console.error('Record Order Error:', error)
-    // Handle unique constraint errors (e.g., accountReference)
-    if (error.code === 'P2002') {
-      return NextResponse.json({ error: "Reference ID already exists." }, { status: 400 })
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Order Recording Error:', error)
+    return NextResponse.json(
+      { error: error.message || "Failed to record order" }, 
+      { status: 500 }
+    )
   }
 }
