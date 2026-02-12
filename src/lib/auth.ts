@@ -1,16 +1,14 @@
 import { cookies } from 'next/headers'
 import { SignJWT, jwtVerify } from 'jose'
 
-// This is the key used to encrypt your session. 
-// In a real app, you'd put this in your .env file.
 const SECRET_KEY = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'unique-organizers-super-secret-key-2026'
+  process.env.JWT_SECRET || 'unique-organizers-2026-secure-key'
 );
 
 export async function createSession(userId: string, role: string) {
   const token = await new SignJWT({ userId, role })
     .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('24h')
+    .setExpirationTime('30d') // Persistent for 30 days
     .sign(SECRET_KEY);
 
   const cookieStore = await cookies();
@@ -18,8 +16,9 @@ export async function createSession(userId: string, role: string) {
   cookieStore.set('session', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 60 * 60 * 24, // 1 day
+    maxAge: 60 * 60 * 24 * 30, // 30 days
     path: '/',
+    sameSite: 'lax'
   });
 }
 
@@ -33,6 +32,11 @@ export async function getSession() {
   } catch (error) {
     return null;
   }
+}
+
+export async function isAdmin() {
+  const session = await getSession();
+  return session?.role === 'ADMIN';
 }
 
 export async function logout() {

@@ -7,12 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   password  String
   name      String?
-  role      String   @default("CUSTOMER")
+  role      Role     @default(CUSTOMER)
   orders    Order[]
   createdAt DateTime @default(now())
 }
@@ -25,7 +30,7 @@ model Product {
   category       String
   retailPrice    Float
   wholesalePrice Float       @default(0)
-  colors         String[]
+  colors         String[]    // Example: ["#FF0000", "#000000"]
   inStock        Boolean     @default(true)
   items          OrderItem[]
   createdAt      DateTime    @default(now())
@@ -70,9 +75,4 @@ enum PaymentStatus {
   INITIATED
   SUCCESS
   FAILED
-}
-
-enum PaymentMethod {
-  MPESA_STK
-  MPESA_PAYBILL
 }
