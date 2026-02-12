@@ -4,24 +4,24 @@ import bcrypt from 'bcryptjs'
 const prisma = new PrismaClient()
 
 async function main() {
-  const hashedPassword = await bcrypt.hash("admin123", 10)
+  // This turns 13027737 into a secure string the app can read
+  const hashedPassword = await bcrypt.hash("13027737", 10)
   
-  const user = await prisma.user.upsert({
-    where: { email: 'admin@test.com' },
-    update: { password: hashedPassword, role: 'ADMIN' },
+  await prisma.user.upsert({
+    where: { email: 'rubykituli14@gmail.com' },
+    update: { 
+      password: hashedPassword, 
+      role: 'ADMIN' 
+    },
     create: {
-      email: 'admin@test.com',
+      email: 'rubykituli14@gmail.com',
       password: hashedPassword,
-      name: 'System Admin',
+      name: 'Ruby Kituli',
       role: 'ADMIN',
     },
   })
 
-  console.log("SUCCESS: Admin user created/updated!")
-  console.log("Email: admin@test.com")
-  console.log("Password: admin123")
+  console.log("✅ DONE: rubykituli14@gmail.com is now an ADMIN with password 13027737");
 }
 
-main()
-  .catch(e => console.error(e))
-  .finally(() => prisma.$disconnect())
+main().catch(e => console.error(e)).finally(() => prisma.$disconnect())
