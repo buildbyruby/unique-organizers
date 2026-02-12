@@ -41,7 +41,7 @@ export default async function AdminOrdersPage() {
                 </div>
                 <div>
                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Customer</p>
-                  <p className="font-bold text-white">{order.user.name || order.user.email}</p>
+                  <p className="font-bold text-white">{order.user?.name || order.user?.email || "Guest Customer"}</p>
                   <p className="text-[10px] font-mono text-purple-500 mt-1 uppercase">ID: {order.accountReference}</p>
                 </div>
               </div>
