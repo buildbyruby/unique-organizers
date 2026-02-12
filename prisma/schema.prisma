@@ -30,6 +30,12 @@ model Product {
   category       String
   retailPrice    Float
   wholesalePrice Float       @default(0)
+  
+  // --- FIXED: Added these two fields to stop the build error ---
+  minWholesale   Int         @default(1)
+  stock          Int         @default(0)
+  // -----------------------------------------------------------
+
   colors         String[]    // Example: ["#FF0000", "#000000"]
   inStock        Boolean     @default(true)
   items          OrderItem[]
