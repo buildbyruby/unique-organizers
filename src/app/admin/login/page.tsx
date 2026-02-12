@@ -1,95 +1,78 @@
-'use client';
+"use client"
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ShieldCheck, Lock, ArrowRight, AlertCircle } from 'lucide-react';
+import { useState } from "react";
+import { login } from "@/app/actions";
+import { useRouter } from "next/navigation";
+import { Lock, Loader2, AlertCircle } from "lucide-react";
 
 export default function AdminLogin() {
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  async function handleSubmit(formData: FormData) {
     setLoading(true);
-    setError('');
+    setError("");
+    
+    // Call the Server Action directly
+    const result = await login(formData);
 
-    try {
-      const res = await fetch('/api/admin/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      });
-
-      if (res.ok) {
-        router.push('/admin');
-        router.refresh(); // Refresh to update middleware state
-      } else {
-        setError('Access Denied: Invalid Credentials');
-      }
-    } catch (err) {
-      setError('System Error. Please try again.');
-    } finally {
+    if (result.success) {
+      // Force a hard refresh to update the middleware/cookies
+      window.location.href = "/admin"; 
+    } else {
+      setError(result.message || "Invalid credentials");
       setLoading(false);
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        
-        {/* Logo / Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6 text-purple-500">
-            <ShieldCheck size={32} />
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <div className="mx-auto w-16 h-16 bg-purple-900/20 rounded-full flex items-center justify-center mb-4 border border-purple-500/30">
+            <Lock className="w-8 h-8 text-purple-500" />
           </div>
-          <h1 className="text-2xl font-black uppercase tracking-tighter">Restricted Access</h1>
-          <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">
-            Unique Organizers // Command Center
-          </p>
+          <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Admin Access</h2>
+          <p className="mt-2 text-sm text-gray-500 uppercase tracking-widest">Restricted Area</p>
         </div>
 
-        {/* Login Form */}
-        <form onSubmit={handleLogin} className="bg-[#0a0a0c] border border-white/5 p-8 rounded-[2rem] shadow-2xl">
+        <form action={handleSubmit} className="mt-8 space-y-6">
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex items-center gap-3 text-red-500">
+              <AlertCircle size={18} />
+              <span className="text-xs font-bold uppercase tracking-wide">{error}</span>
+            </div>
+          )}
           
-          <div className="mb-6">
-            <label className="block text-[9px] font-black uppercase tracking-widest text-gray-500 mb-2 pl-2">
-              Security Key
-            </label>
-            <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-purple-500 transition-colors" size={16} />
+          <div className="space-y-4">
+            <div>
               <input
+                name="email"
+                type="email"
+                required
+                placeholder="ADMIN ID"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white placeholder-gray-600 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all text-sm font-bold tracking-wide"
+              />
+            </div>
+            <div>
+              <input
+                name="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="ENTER ADMIN PASSWORD"
-                className="w-full bg-black/50 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-xs font-bold text-white placeholder-gray-700 outline-none focus:border-purple-500/50 transition-all"
+                required
+                placeholder="PASSKEY"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white placeholder-gray-600 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all text-sm font-bold tracking-wide"
               />
             </div>
           </div>
 
-          {error && (
-            <div className="mb-6 flex items-center gap-2 text-red-500 text-[10px] font-bold uppercase tracking-widest bg-red-500/10 p-3 rounded-xl border border-red-500/20">
-              <AlertCircle size={14} /> {error}
-            </div>
-          )}
-
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-white text-black py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-500 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
+            className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl text-xs font-black uppercase tracking-[0.2em] text-black bg-white hover:bg-purple-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Authenticating...' : 'Access Portal'}
-            {!loading && <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />}
+            {loading ? <Loader2 className="animate-spin h-4 w-4" /> : "Authenticate"}
           </button>
-
-          <div className="mt-8 text-center">
-             <p className="text-[8px] text-gray-600 uppercase tracking-widest">
-               Unauthorized access attempts are logged.
-               <br />Server ID: 254_SECURE_NODE
-             </p>
-          </div>
         </form>
       </div>
     </div>
