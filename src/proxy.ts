@@ -29,5 +29,6 @@ export async function proxy(request: NextRequest) {
 
 // Ensure this matches your admin paths
 export const config = {
-  matcher: ['/admin/:path*'],
+  // This tells Next.js exactly which folders to protect
+  matcher: ['/admin/:path*'], 
 };
