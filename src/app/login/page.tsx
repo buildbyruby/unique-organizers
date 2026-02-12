@@ -1,39 +1,43 @@
-import { PrismaClient } from '@prisma/client'
-import { compare } from 'bcryptjs'
-import { redirect } from 'next/navigation'
-import { createSession } from '@/lib/auth'
+"use client"
 
-const prisma = new PrismaClient()
+import { useState } from "react";
+import { login } from "@/app/actions"; // We use our new unified action
+import { Lock, Loader2, AlertCircle } from "lucide-react";
 
-// MUST HAVE 'export default'
 export default function LoginPage() {
-  
-  async function login(formData: FormData) {
-    "use server"
-    
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || !(await compare(password, user.password))) {
-      redirect('/login?error=invalid');
+  async function handleSubmit(formData: FormData) {
+    setLoading(true);
+    setError("");
+    const result = await login(formData);
+
+    if (result.success) {
+      window.location.href = result.role === "ADMIN" ? "/admin" : "/";
+    } else {
+      setError(result.message);
+      setLoading(false);
     }
-
-    await createSession(user.id, user.role);
-    if (user.role === 'ADMIN') redirect('/admin');
-    else redirect('/');
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
-      <div className="w-full max-w-md bg-white rounded-[2rem] p-10 shadow-xl border border-slate-100">
-        <h1 className="text-3xl font-black italic uppercase tracking-tighter text-slate-900 mb-2">Welcome <span className="text-pink-600">Back</span></h1>
-        <form action={login} className="space-y-4">
-          <input name="email" type="email" required className="w-full bg-slate-50 p-4 rounded-xl text-sm" placeholder="Email" />
-          <input name="password" type="password" required className="w-full bg-slate-50 p-4 rounded-xl text-sm" placeholder="Password" />
-          <button className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase tracking-widest">Sign In</button>
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-8 bg-[#0a0a0a] p-8 rounded-[2rem] border border-white/5">
+        <div className="text-center">
+          <h2 className="text-2xl font-black uppercase tracking-tighter">Client Access</h2>
+          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-2">Unique Organizers Node</p>
+        </div>
+
+        <form action={handleSubmit} className="space-y-4">
+          {error && <div className="text-red-500 text-[10px] font-bold uppercase">{error}</div>}
+          <input name="email" type="email" placeholder="EMAIL" required className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-purple-500" />
+          <input name="password" type="password" placeholder="PASSWORD" required className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-purple-500" />
+          <button type="submit" disabled={loading} className="w-full bg-white text-black font-black py-4 rounded-xl uppercase tracking-widest text-xs hover:bg-purple-600 hover:text-white transition">
+            {loading ? <Loader2 className="animate-spin mx-auto" size={16} /> : "Enter System"}
+          </button>
         </form>
       </div>
     </div>
-  )
+  );
 }

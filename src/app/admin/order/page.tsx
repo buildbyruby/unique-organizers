@@ -1,3 +1,4 @@
+"use client"
 import prisma from '@/lib/prisma'
 import { updateOrderStatus } from './actions'
 import { Package, Clock, CheckCircle2, Truck, XCircle, User as UserIcon } from 'lucide-react'
