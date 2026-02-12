@@ -106,11 +106,11 @@ export default async function HomePage(props: {
               <LayoutDashboard size={14} /> <span className="hidden md:inline">Admin</span>
             </Link>
             <Link
-              href="/login"
-              className="bg-white text-black px-4 md:px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all transform active:scale-95"
-            >
-              Access
-            </Link>
+  href="/login"
+  className="bg-white text-black px-4 md:px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all"
+>
+  Access
+</Link>
           </div>
         </div>
       </nav>

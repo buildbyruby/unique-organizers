@@ -4,28 +4,34 @@ import { jwtVerify } from 'jose';
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "unique-organizers-2026");
 
-export async function middleware(request: NextRequest) {
-  const token = request.cookies.get('auth_token')?.value;
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const token = request.cookies.get('auth_token')?.value;
 
-  // Protect Admin Routes
+  // 1. ADMIN PROTECTION
   if (pathname.startsWith('/admin')) {
     if (pathname === '/admin/login') return NextResponse.next();
+    
     if (!token) return NextResponse.redirect(new URL('/admin/login', request.url));
 
     try {
       const { payload } = await jwtVerify(token, SECRET);
-      if (payload.role !== 'ADMIN') return NextResponse.redirect(new URL('/', request.url));
+      if (payload.role !== 'ADMIN') {
+        return NextResponse.redirect(new URL('/', request.url));
+      }
+      return NextResponse.next();
     } catch {
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
   }
 
-  // Protect Customer Dashboard
-  if (pathname.startsWith('/dashboard') && !token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  // 2. CUSTOMER DASHBOARD PROTECTION
+  if (pathname.startsWith('/dashboard')) {
+    if (!token) return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.next();
   }
 
+  // 3. PUBLIC ROUTES (Home, Products, etc.)
   return NextResponse.next();
 }
 
