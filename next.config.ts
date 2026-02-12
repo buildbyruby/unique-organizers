@@ -1,14 +1,21 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
-    // This allows the build to succeed even if there are TypeScript errors
     ignoreBuildErrors: true,
   },
   eslint: {
-    // This allows the build to succeed even if there are ESLint warnings/errors
     ignoreDuringBuilds: true,
   },
-  // Add any other existing config options below if you had them
+  images: {
+    // You MUST add this so Cloudinary images actually show up on your site
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**',
+      },
+    ],
+  },
 };
 
 export default nextConfig;
