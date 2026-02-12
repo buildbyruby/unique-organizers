@@ -1,43 +1,67 @@
 "use client"
 
-import { useState } from "react";
-import { login } from "@/app/actions"; // We use our new unified action
-import { Lock, Loader2, AlertCircle } from "lucide-react";
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const router = useRouter()
 
-  async function handleSubmit(formData: FormData) {
-    setLoading(true);
-    setError("");
-    const result = await login(formData);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
 
-    if (result.success) {
-      window.location.href = result.role === "ADMIN" ? "/admin" : "/";
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+
+    const data = await res.json()
+
+    if (res.ok) {
+      // THIS IS THE KEY: Physically moving the user based on their role
+      if (data.role === 'ADMIN') {
+        router.push('/admin')
+      } else {
+        router.push('/dashboard')
+      }
+      router.refresh()
     } else {
-      setError(result.message);
-      setLoading(false);
+      setError(data.error || 'Login failed')
     }
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8 bg-[#0a0a0a] p-8 rounded-[2rem] border border-white/5">
-        <div className="text-center">
-          <h2 className="text-2xl font-black uppercase tracking-tighter">Client Access</h2>
-          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-2">Unique Organizers Node</p>
-        </div>
-
-        <form action={handleSubmit} className="space-y-4">
-          {error && <div className="text-red-500 text-[10px] font-bold uppercase">{error}</div>}
-          <input name="email" type="email" placeholder="EMAIL" required className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-purple-500" />
-          <input name="password" type="password" placeholder="PASSWORD" required className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-purple-500" />
-          <button type="submit" disabled={loading} className="w-full bg-white text-black font-black py-4 rounded-xl uppercase tracking-widest text-xs hover:bg-purple-600 hover:text-white transition">
-            {loading ? <Loader2 className="animate-spin mx-auto" size={16} /> : "Enter System"}
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
+      <div className="w-full max-w-md space-y-8 bg-[#0a0a0c] p-10 rounded-[2.5rem] border border-white/5">
+        <h2 className="text-3xl font-black uppercase italic tracking-tighter text-center">
+          System <span className="text-purple-600">Access</span>
+        </h2>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <input
+            type="email"
+            placeholder="EMAIL_ADDRESS"
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-purple-500 transition-all font-mono text-sm"
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="ACCESS_KEY"
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-purple-500 transition-all font-mono text-sm"
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          {error && <p className="text-red-500 text-[10px] font-black uppercase text-center">{error}</p>}
+          <button className="w-full bg-white text-black font-black uppercase tracking-widest py-4 rounded-xl hover:bg-purple-600 hover:text-white transition-all">
+            Initialize Session
           </button>
         </form>
       </div>
     </div>
-  );
+  )
 }
