@@ -4,16 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-enum OrderStatus {
-  PENDING
-  SUCCESS
-  FAILED
-  SHIPPED
-  DELIVERED
-  PROCESSING
 }
 
 model User {
@@ -55,6 +45,15 @@ model Order {
   paymentStatus    String      @default("PENDING")
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  SHIPPED
+  DELIVERED
+  PROCESSING
 }
 
 model OrderItem {
