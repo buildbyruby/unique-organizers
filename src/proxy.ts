@@ -4,6 +4,7 @@ import { jwtVerify } from 'jose';
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "unique-organizers-2026");
 
+// MUST BE NAMED 'proxy' OR 'default' IN NEXT.JS 16
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('auth_token')?.value;
@@ -31,7 +32,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 3. PUBLIC ROUTES (Home, Products, etc.)
   return NextResponse.next();
 }
 

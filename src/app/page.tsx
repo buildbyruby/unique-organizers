@@ -2,7 +2,6 @@ import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import { 
   ShoppingCart, 
-  Zap, 
   Search, 
   LayoutDashboard, 
   ArrowUpRight, 
@@ -13,6 +12,9 @@ import {
   MapPin,
   Phone,
   Clock,
+  Sparkles,
+  ShieldCheck,
+  HeartHandshake,
   ChevronRight
 } from 'lucide-react';
 import { Metadata } from 'next';
@@ -69,94 +71,143 @@ export default async function HomePage(props: {
   ];
 
   return (
-    /* FIX: suppressHydrationWarning added here. 
-       This stops the error caused by browser extensions or locale mismatches 
-       on your retail price formatting.
-    */
     <div 
       suppressHydrationWarning 
-      className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 font-sans antialiased"
+      className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 font-sans antialiased overflow-x-hidden"
     >
-      
+      {/* --- ANNOUNCEMENT BAR --- */}
+      <div className="w-full bg-gradient-to-r from-purple-900 via-purple-600 to-purple-900 py-2 text-center flex items-center justify-center gap-2">
+        <Sparkles size={12} className="text-purple-200 animate-pulse" />
+        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white">Elevating Nairobi • 24H Rapid Dispatch Now Active</span>
+      </div>
+
       {/* --- NAVIGATION BAR --- */}
-      <nav className="fixed top-0 w-full z-50 backdrop-blur-xl border-b border-white/5 bg-black/60">
+      <nav className="sticky top-0 w-full z-50 backdrop-blur-2xl border-b border-white/5 bg-black/50 transition-all">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="text-xl md:text-2xl font-black tracking-tighter flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-gradient-to-tr from-purple-600 to-pink-500 rounded-lg group-hover:rotate-12 transition-transform duration-300" />
-            <span className="flex">UNIQUE <span className="text-gray-400 font-light italic ml-1 hidden sm:block">ORGANIZERS</span></span>
+          <Link href="/" className="text-xl md:text-2xl font-black tracking-tighter flex items-center gap-3 group">
+            <div className="w-8 h-8 bg-gradient-to-tr from-purple-600 to-pink-500 rounded-xl group-hover:rotate-[15deg] group-hover:scale-110 transition-all duration-300 shadow-[0_0_15px_rgba(147,51,234,0.3)]" />
+            <div className="flex flex-col">
+              <span className="leading-none text-white transition-colors group-hover:text-purple-100">UNIQUE</span>
+              <span className="text-[8px] font-black tracking-[0.4em] text-purple-400 uppercase hidden sm:block mt-0.5">Organizers</span>
+            </div>
           </Link>
           
           <div className="hidden lg:flex items-center flex-1 max-w-md mx-12">
             <form action="/" className="relative w-full group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-purple-500 transition-colors" size={14} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors" size={14} />
               <input 
                 name="q"
                 defaultValue={query}
-                placeholder="SEARCH ARCHIVES..." 
-                className="w-full bg-white/5 border border-white/10 rounded-full py-2.5 pl-12 pr-6 text-[10px] font-black uppercase tracking-widest focus:border-purple-500/50 outline-none transition-all placeholder:text-gray-700"
+                placeholder="SEARCH PREMIUM ASSETS..." 
+                className="w-full bg-white/[0.03] border border-white/10 rounded-full py-2.5 pl-12 pr-6 text-[10px] font-black uppercase tracking-widest focus:bg-white/[0.05] focus:border-purple-500/50 focus:shadow-[0_0_20px_rgba(147,51,234,0.1)] outline-none transition-all placeholder:text-gray-600"
               />
             </form>
           </div>
 
-          <div className="flex items-center space-x-3 md:space-x-6">
-            <Link href="/dashboard" className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition">
-              <ShoppingBag size={14} /> Orders
+          <div className="flex items-center space-x-4 md:space-x-8">
+            <Link href="/dashboard" className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors">
+              <ShoppingBag size={14} className="text-purple-500/70" /> Orders
             </Link>
-            <Link href="/admin" className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-purple-400 flex items-center gap-2 transition">
+            <Link href="/login" className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-purple-400 flex items-center gap-2 transition-colors">
               <LayoutDashboard size={14} /> <span className="hidden md:inline">Admin</span>
             </Link>
             <Link
-  href="/login"
-  className="bg-white text-black px-4 md:px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all"
->
-  Access
-</Link>
+              href="/login"
+              className="bg-white text-black px-5 md:px-7 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all shadow-lg shadow-white/5 active:scale-95"
+            >
+              Access
+            </Link>
           </div>
         </div>
       </nav>
 
       {/* --- HERO SECTION --- */}
-      <section className="relative pt-32 md:pt-48 pb-12 md:pb-20 px-6 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[400px] md:h-[600px] bg-purple-600/10 blur-[120px] rounded-full pointer-events-none" />
+      <section className="relative pt-24 md:pt-36 pb-20 md:pb-32 px-6 overflow-hidden flex items-center min-h-[70vh]">
+        {/* Animated Background Orbs */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl h-[400px] md:h-[600px] bg-purple-600/15 blur-[120px] rounded-full pointer-events-none mix-blend-screen animate-pulse duration-10000" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none" />
         
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 md:gap-12">
-            <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-purple-500/20 bg-purple-500/5 text-[9px] font-black uppercase tracking-[0.3em] text-purple-400 mb-6 md:mb-8">
-                <Package size={12} className="animate-bounce" />
-                Inventory Sync: Online
+        <div className="max-w-7xl mx-auto relative z-10 w-full">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-12">
+            <div className="max-w-4xl space-y-8">
+              <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-purple-500/30 bg-purple-500/10 backdrop-blur-md text-[9px] font-black uppercase tracking-[0.3em] text-purple-300 shadow-[0_0_20px_rgba(147,51,234,0.15)]">
+                <div className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
+                Premium Stock Arrived
               </div>
-              <h1 className="text-5xl md:text-9xl font-black tracking-tighter leading-[0.9] mb-6 md:mb-8 uppercase italic">
-                The <span className="text-gray-700 not-italic">Elite</span> <br />
-                System <span className="bg-gradient-to-b from-white to-gray-500 bg-clip-text text-transparent">Stock.</span>
+              
+              <h1 className="text-6xl md:text-8xl lg:text-[8rem] font-black tracking-tighter leading-[0.85] uppercase italic">
+                Elevate Your <br />
+                <span className="bg-gradient-to-br from-white via-purple-100 to-gray-500 bg-clip-text text-transparent drop-shadow-2xl">Space.</span>
               </h1>
-              <p className="text-gray-500 max-w-xl text-base md:text-lg font-medium leading-relaxed">
-                Direct access to high-tier organizational assets. Curated for performance, delivered across Nairobi within 24 hours.
+              
+              <p className="text-gray-400 max-w-xl text-lg md:text-xl font-medium leading-relaxed">
+                Direct access to high-tier organizational and lifestyle assets. Curated for performance, designed for living.
               </p>
-            </div>
-            
-            <div className="hidden md:block text-right">
-                <div className="text-[10px] font-black text-gray-600 uppercase tracking-[0.5em] mb-4">Node Connectivity</div>
-                <div className="flex items-center gap-3 justify-end">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-xs font-bold font-mono text-green-500/80">254_SERVER_ACTIVE</span>
+
+              <div className="flex flex-wrap items-center gap-4 pt-4">
+                <Link href="#catalog" className="bg-white text-black px-8 py-4 rounded-full text-xs font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all flex items-center gap-2 active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+                  Explore Archives <ChevronRight size={16} />
+                </Link>
+                <div className="flex items-center gap-4 px-6 py-4 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm">
+                  <div className="flex -space-x-3">
+                    {[1,2,3].map((i) => (
+                      <div key={i} className={`w-8 h-8 rounded-full border-2 border-black bg-gray-800 flex items-center justify-center text-[10px]`}>
+                        <Star size={10} className="text-yellow-500"/>
+                      </div>
+                    ))}
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">500+ Happy Spaces</span>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- TRUST PILLARS (The Human Element) --- */}
+      <section className="border-y border-white/5 bg-black/40 backdrop-blur-lg relative z-20">
+        <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-white/10">
+          <div className="flex items-center gap-4 pt-4 md:pt-0 md:px-6 group">
+            <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-all">
+              <ShieldCheck size={24} />
+            </div>
+            <div>
+              <h4 className="font-black text-xs uppercase tracking-widest text-white mb-1">Curated Quality</h4>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Premium materials only</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 pt-6 md:pt-0 md:px-6 group">
+            <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-all">
+              <Package size={24} />
+            </div>
+            <div>
+              <h4 className="font-black text-xs uppercase tracking-widest text-white mb-1">Rapid Dispatch</h4>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">24H Delivery in Nairobi</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 pt-6 md:pt-0 md:px-6 group">
+            <div className="p-3 bg-pink-500/10 rounded-2xl text-pink-400 group-hover:bg-pink-500 group-hover:text-white transition-all">
+              <HeartHandshake size={24} />
+            </div>
+            <div>
+              <h4 className="font-black text-xs uppercase tracking-widest text-white mb-1">Human Support</h4>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Real people, real help</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* --- CATEGORY FILTERS --- */}
-      <section className="py-6 px-4 md:px-8 sticky top-[68px] md:top-[72px] z-40 backdrop-blur-md bg-black/40 border-y border-white/5">
-        <div className="max-w-7xl mx-auto flex items-center gap-3 overflow-x-auto no-scrollbar scroll-smooth">
-          <Link href="/" className={`whitespace-nowrap px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${!category ? 'bg-white text-black' : 'bg-white/5 text-gray-500 border border-white/5 hover:border-white/20'}`}>
-            All Archives
+      <section className="py-6 px-4 md:px-8 sticky top-[58px] z-40 backdrop-blur-xl bg-[#050505]/80 border-b border-white/5 shadow-2xl shadow-black">
+        <div className="max-w-7xl mx-auto flex items-center gap-3 overflow-x-auto no-scrollbar scroll-smooth pb-2">
+          <Link href="/" className={`whitespace-nowrap px-6 md:px-8 py-3 rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${!category ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-white/[0.03] text-gray-400 border border-white/5 hover:border-white/20 hover:text-white'}`}>
+            Complete Archive
           </Link>
           {categories.map((cat) => (
             <Link 
               key={cat}
               href={`/?category=${cat}`} 
-              className={`whitespace-nowrap px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${category === cat ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' : 'bg-white/5 text-gray-500 border border-white/5 hover:border-white/20'}`}
+              className={`whitespace-nowrap px-6 md:px-8 py-3 rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${category === cat ? 'bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.4)] border border-purple-500' : 'bg-white/[0.03] text-gray-400 border border-white/5 hover:border-white/20 hover:text-white'}`}
             >
               {cat.replace('_', ' ')}
             </Link>
@@ -165,56 +216,70 @@ export default async function HomePage(props: {
       </section>
 
       {/* --- PRODUCT GRID --- */}
-      <section id="catalog" className="py-12 md:py-20 px-4 md:px-8">
+      <section id="catalog" className="py-16 md:py-24 px-4 md:px-8 bg-[#020202]">
         <div className="max-w-7xl mx-auto">
+          
+          <div className="mb-10 flex items-end justify-between">
+            <div>
+              <h2 className="text-3xl font-black uppercase italic tracking-tighter">
+                {query ? 'Search Results' : category ? category.replace('_', ' ') : 'Featured Assets'}
+              </h2>
+              <p className="text-gray-500 text-sm mt-2 font-medium">Discover equipment tailored to your aesthetic.</p>
+            </div>
+            <div className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-purple-400 bg-purple-500/10 px-4 py-2 rounded-full">
+              <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"/> Live Inventory
+            </div>
+          </div>
+
           {products.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
               {products.map((product) => (
                 <Link 
                   key={product.id} 
                   href={`/product/${product.id}`}
-                  className="group bg-[#0a0a0c] rounded-[2rem] md:rounded-[2.5rem] border border-white/5 p-2 md:p-3 transition-all hover:border-purple-500/40 hover:bg-[#111114] flex flex-col"
+                  className="group bg-gradient-to-b from-[#0f0f12] to-[#0a0a0c] rounded-[2.5rem] border border-white/5 p-3 transition-all duration-500 hover:-translate-y-2 hover:border-purple-500/50 hover:shadow-[0_20px_40px_-15px_rgba(147,51,234,0.3)] flex flex-col"
                 >
-                  <div className="aspect-[4/5] rounded-[1.5rem] md:rounded-[2rem] overflow-hidden bg-gray-900 relative">
+                  <div className="aspect-[4/5] rounded-[2rem] overflow-hidden bg-black relative shadow-inner">
                     <img 
                       src={product.images[0] || "/api/placeholder/400/500"} 
                       alt={product.name} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90 group-hover:opacity-100" 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100" 
                     />
                     
                     {product.colors && product.colors.length > 0 && (
-                      <div className="absolute bottom-4 left-4 flex gap-1.5 bg-black/40 backdrop-blur-md p-1.5 rounded-full border border-white/10">
+                      <div className="absolute bottom-4 left-4 flex gap-1.5 bg-black/60 backdrop-blur-md p-2 rounded-full border border-white/10 shadow-lg">
                         {product.colors.slice(0, 4).map((color, idx) => (
                           <div 
                             key={idx} 
                             style={{ backgroundColor: color }} 
-                            className="w-3 h-3 rounded-full border border-white/20 shadow-sm"
+                            className="w-3.5 h-3.5 rounded-full border border-white/20 shadow-sm"
                           />
                         ))}
                       </div>
                     )}
 
-                    <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[8px] font-black uppercase tracking-widest">
-                      {product.category}
+                    <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-[9px] font-black uppercase tracking-widest text-gray-300">
+                      {product.category.replace('_', ' ')}
                     </div>
                     
-                    <div className="absolute bottom-4 right-4 w-10 h-10 bg-white text-black rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-xl">
-                        <ArrowUpRight size={20} />
+                    <div className="absolute bottom-4 right-4 w-12 h-12 bg-white text-black rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.4)]">
+                        <ArrowUpRight size={20} className="group-hover:rotate-45 transition-transform" />
                     </div>
                   </div>
                   
-                  <div className="p-4 md:p-5 flex-1 flex flex-col">
-                    <h3 className="text-base md:text-lg font-bold tracking-tight mb-2 uppercase group-hover:text-purple-400 transition-colors line-clamp-1">{product.name}</h3>
+                  <div className="p-5 flex-1 flex flex-col">
+                    <h3 className="text-lg font-black tracking-tight mb-2 uppercase group-hover:text-purple-300 transition-colors line-clamp-1">{product.name}</h3>
                     
-                    <div className="mt-auto pt-4 flex justify-between items-end border-t border-white/5">
+                    <div className="mt-auto pt-5 flex justify-between items-end border-t border-white/5 relative">
                       <div>
-                        <span className="text-[8px] text-gray-500 block uppercase font-black tracking-widest mb-1">Retail Price</span>
-                        <p className="text-lg md:text-xl font-black tracking-tighter text-white italic">
-                          KSh {product.retailPrice.toLocaleString()}
+                        <span className="text-[9px] text-gray-500 block uppercase font-black tracking-widest mb-1">Acquisition Value</span>
+                        <p className="text-xl font-black tracking-tighter text-white italic drop-shadow-md">
+                          <span className="text-purple-400 mr-1 text-sm font-bold not-italic">KSh</span>
+                          {product.retailPrice.toLocaleString()}
                         </p>
                       </div>
-                      <div className="bg-purple-500/10 p-2 rounded-lg group-hover:bg-purple-500 transition-colors">
-                        <ShoppingCart size={14} className="text-purple-400 group-hover:text-white" />
+                      <div className="bg-white/5 p-3 rounded-2xl group-hover:bg-purple-600 transition-colors border border-white/5 group-hover:border-purple-500">
+                        <ShoppingCart size={18} className="text-white" />
                       </div>
                     </div>
                   </div>
@@ -222,80 +287,103 @@ export default async function HomePage(props: {
               ))}
             </div>
           ) : (
-            <div className="py-32 md:py-40 text-center border border-white/5 rounded-[2rem] md:rounded-[3rem] bg-white/[0.02]">
-                <Globe size={48} className="mx-auto mb-6 text-gray-800 animate-pulse" />
-                <h3 className="text-xl font-black uppercase tracking-widest text-gray-600">No Assets Available</h3>
-                <p className="text-gray-700 mt-2 font-bold uppercase text-[10px] tracking-widest px-4">The current archive filter returned zero results. Adjust your parameters.</p>
+            <div className="py-32 md:py-48 text-center border-2 border-dashed border-white/10 rounded-[3rem] bg-white/[0.01] backdrop-blur-sm">
+                <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 relative">
+                  <div className="absolute inset-0 border border-white/20 rounded-full animate-ping opacity-20" />
+                  <Globe size={32} className="text-gray-500" />
+                </div>
+                <h3 className="text-2xl font-black uppercase tracking-widest text-white mb-3 italic">Signal Lost</h3>
+                <p className="text-gray-400 font-bold uppercase text-xs tracking-widest px-4 max-w-md mx-auto">
+                  We couldn't locate any items matching your exact parameters. Adjust your filters or explore the full archive.
+                </p>
+                <Link href="/" className="inline-block mt-8 bg-white text-black px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-colors">
+                  Reset Scanners
+                </Link>
             </div>
           )}
         </div>
       </section>
 
-      {/* --- PROFESSIONAL ABOUT US SECTION --- */}
-      <section className="py-20 px-6 border-t border-white/5 bg-[#080808]">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic">
-                Precision <span className="text-purple-500">Logistics.</span>
+      {/* --- WARM / HUMAN ABOUT US SECTION --- */}
+      <section className="py-24 px-6 border-t border-white/5 bg-[#050505] relative overflow-hidden">
+        <div className="absolute -left-40 top-20 w-96 h-96 bg-purple-900/20 blur-[150px] rounded-full" />
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center relative z-10">
+          <div className="space-y-10">
+            <div className="space-y-6">
+              <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter italic leading-[0.9]">
+                Crafted for Your Space.<br/>
+                <span className="text-purple-500">Delivered with Precision.</span>
               </h2>
-              <p className="text-gray-400 text-lg leading-relaxed max-w-xl">
-                Unique Organizers is more than a storefront—it is a distribution node for high-tier hardware and lifestyle assets. Based in the heart of Nairobi, we prioritize authentic sourcing and rapid deployment.
+              <p className="text-gray-400 text-lg md:text-xl leading-relaxed max-w-xl font-medium">
+                Unique Organizers is built on a simple promise: providing premium quality pieces that transform how you live and work. Real human curation meets rapid, reliable dispatch from the heart of Nairobi.
               </p>
             </div>
             
             <div className="grid sm:grid-cols-2 gap-6">
-              <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 space-y-3">
-                <MapPin className="text-purple-500" size={24} />
-                <h4 className="font-black text-xs uppercase tracking-widest">Headquarters</h4>
-                <p className="text-gray-500 text-xs font-bold leading-relaxed">
-                  Accra Road, Sirikiwa Business Centre<br />
+              <div className="p-8 rounded-[2rem] bg-gradient-to-br from-white/[0.05] to-transparent border border-white/10 hover:border-purple-500/30 transition-colors group">
+                <MapPin className="text-purple-500 mb-4 group-hover:scale-110 transition-transform" size={28} />
+                <h4 className="font-black text-sm uppercase tracking-widest text-white mb-2">The Hub</h4>
+                <p className="text-gray-400 text-xs font-bold leading-relaxed">
+                  Accra Road, Sirikiwa<br />
                   First Floor, Shop 104<br />
                   Nairobi, Kenya
                 </p>
               </div>
-              <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 space-y-3">
-                <Clock className="text-purple-500" size={24} />
-                <h4 className="font-black text-xs uppercase tracking-widest">Working Hours</h4>
-                <p className="text-gray-500 text-xs font-bold leading-relaxed">
-                  Mon — Sat: 08:00 - 18:00
+              <div className="p-8 rounded-[2rem] bg-gradient-to-br from-white/[0.05] to-transparent border border-white/10 hover:border-purple-500/30 transition-colors group">
+                <Clock className="text-purple-500 mb-4 group-hover:scale-110 transition-transform" size={28} />
+                <h4 className="font-black text-sm uppercase tracking-widest text-white mb-2">Operating Hours</h4>
+                <p className="text-gray-400 text-xs font-bold leading-relaxed">
+                  Monday — Saturday<br />
+                  08:00 AM - 06:00 PM<br />
+                  (Online 24/7)
                 </p>
               </div>
             </div>
 
             <a 
               href="tel:0797517565" 
-              className="inline-flex items-center gap-4 group p-1 pr-6 rounded-full bg-purple-600 hover:bg-purple-500 transition-all"
+              className="inline-flex items-center gap-4 group p-1 pr-8 rounded-full bg-white text-black hover:bg-purple-600 hover:text-white transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]"
             >
-              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center group-hover:rotate-12 transition-transform">
-                <Phone size={20} fill="white" />
+              <div className="w-14 h-14 rounded-full bg-black/10 flex items-center justify-center group-hover:scale-95 group-hover:bg-black/20 transition-all">
+                <Phone size={20} fill="currentColor" />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em]">Call Dispatch: 0797517565</span>
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] opacity-60">Human Support line</span>
+                <span className="text-sm font-black tracking-widest">+254 797 517 565</span>
+              </div>
             </a>
           </div>
 
-          <div className="relative aspect-square md:aspect-video lg:aspect-square rounded-[3rem] overflow-hidden border border-white/10">
-            <div className="absolute inset-0 bg-gradient-to-tr from-purple-900/40 to-black z-10" />
+          <div className="relative aspect-[4/5] lg:aspect-square rounded-[3rem] overflow-hidden border border-white/10 group shadow-2xl">
+            <div className="absolute inset-0 bg-gradient-to-tr from-purple-900/60 via-black/20 to-transparent z-10 transition-opacity duration-700 group-hover:opacity-40" />
             <img 
-              src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80" 
-              alt="Technology Hub" 
-              className="w-full h-full object-cover grayscale opacity-50"
+              src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80" 
+              alt="Premium Organized Space" 
+              className="w-full h-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-1000"
             />
-            <div className="absolute bottom-12 left-12 z-20 space-y-2">
-              <div className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-400">System ID</div>
-              <div className="text-4xl font-black tracking-tighter">254_NBO_NODE</div>
+            <div className="absolute bottom-12 left-12 z-20 space-y-2 transform group-hover:-translate-y-2 transition-transform duration-700">
+              <div className="flex items-center gap-3">
+                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                 <div className="text-[10px] font-black uppercase tracking-[0.4em] text-white/80 backdrop-blur-md px-3 py-1 rounded-full bg-white/10 border border-white/20">Active Node</div>
+              </div>
+              <div className="text-5xl font-black tracking-tighter italic drop-shadow-lg">NBO_254</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* --- FOOTER --- */}
-      <footer className="border-t border-white/5 py-16 md:py-24 px-6 md:px-8 bg-black">
-        <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-[8px] font-bold text-gray-700 uppercase tracking-[0.5em]">© 2026 UNIQUE ORGANIZERS - ALL RIGHTS RESERVED</p>
-          <div className="flex gap-6">
-            <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-gray-500">System Secure</span>
+      <footer className="border-t border-white/10 py-12 md:py-20 px-6 md:px-8 bg-[#020202]">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex flex-col items-center md:items-start gap-2">
+            <span className="text-xl font-black tracking-tighter flex items-center gap-2 italic">
+              UNIQUE <span className="text-purple-500">ORGANIZERS</span>
+            </span>
+            <p className="text-[9px] font-bold text-gray-600 uppercase tracking-[0.4em]">© 2026 - ALL RIGHTS RESERVED</p>
+          </div>
+          <div className="flex items-center gap-6 px-6 py-3 rounded-full bg-white/5 border border-white/5">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Systems Operational</span>
           </div>
         </div>
       </footer>

@@ -1,8 +1,9 @@
 import { Metadata } from 'next';
 import './globals.css';
 import Link from 'next/link';
-import { CartProvider } from '@/context/CartContext'; // We just made this
-import CartDrawer from '@/components/CartDrawer'; // We are about to make this
+import Script from 'next/script';
+import { CartProvider } from '@/context/CartContext';
+import CartDrawer from '@/components/CartDrawer';
 
 export const metadata: Metadata = {
   title: 'Unique Organizers | Premium Kenyan Stock',
@@ -10,8 +11,6 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://uniqueorganizers.co.ke'),
 };
 
-// --- NEW "UNIQUE" LOGO ---
-// A stylized abstract 'U' made of organizational blocks
 const Logo = () => (
   <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M6 6H14V14H6V6Z" fill="white" fillOpacity="0.2"/>
@@ -24,6 +23,10 @@ const Logo = () => (
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        {/* Cloudinary Widget Script for Admin Image Uploads */}
+        <Script src="https://upload-widget.cloudinary.com/global/all.js" strategy="beforeInteractive" />
+      </head>
       <body className="bg-black text-white antialiased selection:bg-purple-500/30">
         <CartProvider>
           <nav className="fixed top-0 w-full z-50 bg-[#050505]/80 backdrop-blur-xl border-b border-white/5">
@@ -43,9 +46,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                  </div>
                </Link>
                
-               <div className="flex gap-8 text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 items-center">
-                 <Link href="/admin" className="hover:text-purple-400 transition hidden md:block">System Node</Link>
-                 {/* The CartDrawer will inject the Cart Button here automatically */}
+               <div className="flex gap-6 items-center">
+                 {/* Singular Secure Admin Path */}
+                 <Link href="/login" className="flex items-center gap-2 group hidden sm:flex">
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-500 group-hover:text-white transition-colors">System Node</span>
+                 </Link>
+                 {/* Cart injected by CartDrawer logic here automatically */}
                </div>
              </div>
           </nav>
