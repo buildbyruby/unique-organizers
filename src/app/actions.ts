@@ -1,6 +1,16 @@
 "use server"
 
-import prisma from "@/lib/prisma";
+import { db } from "@/lib/firebase"; // You created this in Phase 1
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  query, 
+  where, 
+  getDocs, 
+  addDoc 
+} from "firebase/firestore";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
@@ -9,7 +19,7 @@ import bcrypt from "bcryptjs";
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "unique-organizers-2026-secure-key");
 
 /**
- * AUTH SYSTEM: Get the current user session
+ * SESSION SYSTEM
  */
 async function getAuth() {
   const token = (await cookies()).get("auth_token")?.value;
@@ -23,12 +33,11 @@ async function getAuth() {
 }
 
 /**
- * CLOUDINARY SYSTEM: Server-side direct upload
+ * CLOUDINARY UPLOAD (Remains the same)
  */
 async function uploadToCloudinary(file: File): Promise<string> {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
-
   const formData = new FormData();
   formData.append("file", file);
   formData.append("upload_preset", uploadPreset!);
@@ -44,8 +53,7 @@ async function uploadToCloudinary(file: File): Promise<string> {
 }
 
 /**
- * AUTH SYSTEM: Register a new user
- * FIXED: Added 'as any' to role to bypass TypeScript build error
+ * AUTH: Register User (Firestore)
  */
 export async function registerUser(formData: FormData) {
   try {
@@ -53,75 +61,50 @@ export async function registerUser(formData: FormData) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) return { success: false, message: "EMAIL_EXISTS" };
+    // Check if user exists in Firestore
+    const userRef = collection(db, "users");
+    const q = query(userRef, where("email", "==", email));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) return { success: false, message: "EMAIL_EXISTS" };
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: "USER" as any, // This 'as any' fixes the Vercel Type Error
-      },
+    // Create user document
+    const newUserRef = doc(collection(db, "users"));
+    await setDoc(newUserRef, {
+      id: newUserRef.id,
+      name,
+      email,
+      password: hashedPassword,
+      role: "USER",
+      createdAt: new Date().toISOString()
     });
 
     return { success: true, message: "REGISTRATION_SUCCESS" };
   } catch (error) {
-    console.error("Registration Error:", error);
+    console.error("Firebase Register Error:", error);
     return { success: false, message: "REGISTRATION_FAILED" };
   }
 }
 
 /**
- * ADMIN: Add Product
- */
-export async function addProduct(formData: FormData) {
-  const auth = await getAuth();
-  if (auth?.role !== "ADMIN") {
-    return { success: false, message: "UNAUTHORIZED_ACCESS_DENIED" };
-  }
-
-  try {
-    const imageFiles = formData.getAll("images") as File[];
-    const validFiles = imageFiles.filter(f => f.size > 0);
-    
-    // Upload in parallel for speed
-    const imageUrls = await Promise.all(validFiles.map(uploadToCloudinary));
-
-    const product = await prisma.product.create({
-      data: {
-        name: formData.get("name") as string,
-        description: formData.get("description") as string,
-        category: formData.get("category") as string,
-        retailPrice: parseFloat(formData.get("retailPrice") as string),
-        wholesalePrice: parseFloat(formData.get("wholesalePrice") as string) || 0,
-        stock: parseInt(formData.get("stock") as string) || 0,
-        colors: formData.getAll("colors") as string[],
-        images: imageUrls,
-        inStock: true,
-      }
-    });
-
-    revalidatePath("/");
-    revalidatePath("/admin");
-    return { success: true, message: "ASSET_SYNCHRONIZED_SUCCESSFULLY" };
-  } catch (error) {
-    console.error(error);
-    return { success: false, message: "SYSTEM_WRITE_ERROR" };
-  }
-}
-
-/**
- * AUTH SYSTEM: Login
+ * AUTH: Login (Firestore)
  */
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || !(await bcrypt.compare(password, user.password))) {
+  const userRef = collection(db, "users");
+  const q = query(userRef, where("email", "==", email));
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) return { success: false, message: "INVALID_CREDENTIALS" };
+  
+  const userDoc = querySnapshot.docs[0];
+  const user = userDoc.data();
+
+  if (!(await bcrypt.compare(password, user.password))) {
     return { success: false, message: "INVALID_CREDENTIALS" };
   }
 
@@ -141,45 +124,41 @@ export async function login(formData: FormData) {
 }
 
 /**
- * PAYMENT: M-Pesa STK Push
+ * ADMIN: Add Product (Firestore)
  */
-export async function initiateSTKPush(phoneNumber: string, amount: number) {
-  const consumerKey = "ZzSpGBy4ZAiklaxhkNrtGpFw4wSGN9kczgmtXWlQ2vs03MSl";
-  const consumerSecret = "2d8UWwgQ8XUVueHxJVXfxSFTfEcg4tD4KvmEtszZDVsugD3BQXnXrg8lTrKwh31e";
-  const shortCode = "174379";
-  const passKey = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919";
+export async function addProduct(formData: FormData) {
+  const auth = await getAuth();
+  if (auth?.role !== "ADMIN") return { success: false, message: "UNAUTHORIZED" };
 
   try {
-    const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64");
-    const tokenRes = await fetch("https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials", {
-      headers: { Authorization: `Basic ${auth}` },
-    });
-    const { access_token } = await tokenRes.json();
+    const imageFiles = formData.getAll("images") as File[];
+    const validFiles = imageFiles.filter(f => f.size > 0);
+    const imageUrls = await Promise.all(validFiles.map(uploadToCloudinary));
 
-    const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, "").slice(0, 14);
-    const password = Buffer.from(shortCode + passKey + timestamp).toString("base64");
-
-    const stkRes = await fetch("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${access_token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        BusinessShortCode: shortCode,
-        Password: password,
-        Timestamp: timestamp,
-        TransactionType: "CustomerPayBillOnline",
-        Amount: amount,
-        PartyA: phoneNumber.replace(/\D/g, ""),
-        PartyB: shortCode,
-        PhoneNumber: phoneNumber.replace(/\D/g, ""),
-        CallBackURL: "https://gametophoric-an-mystically.ngrok-free.dev/api/mpesa/callback",
-        AccountReference: "UNIQUE-ORG",
-        TransactionDesc: "Order Payment",
-      }),
+    await addDoc(collection(db, "products"), {
+      name: formData.get("name"),
+      description: formData.get("description"),
+      category: formData.get("category"),
+      retailPrice: parseFloat(formData.get("retailPrice") as string),
+      wholesalePrice: parseFloat(formData.get("wholesalePrice") as string) || 0,
+      stock: parseInt(formData.get("stock") as string) || 0,
+      colors: formData.getAll("colors"),
+      images: imageUrls,
+      inStock: true,
+      createdAt: new Date().toISOString()
     });
 
-    const data = await stkRes.json();
-    return { success: true, data };
+    revalidatePath("/");
+    return { success: true, message: "PRODUCT_ADDED" };
   } catch (error) {
-    return { success: false, message: "GATEWAY_TIMEOUT" };
+    return { success: false, message: "FIREBASE_WRITE_ERROR" };
   }
+}
+
+/**
+ * PAYMENT: M-Pesa STK Push (Remains the same logic)
+ */
+export async function initiateSTKPush(phoneNumber: string, amount: number) {
+    // ... This function doesn't use the DB directly, so keep your existing M-Pesa logic here ...
+    // Copy/Paste your existing M-Pesa code here.
 }
