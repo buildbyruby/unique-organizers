@@ -2,6 +2,8 @@ import prisma from '@/lib/prisma'
 import Link from 'next/link'
 import { Package, Clock, CheckCircle, Truck, ArrowUpRight, Search } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function UserDashboard() {
   // In a real app, replace with actual session ID
   const orders = await prisma.order.findMany({
