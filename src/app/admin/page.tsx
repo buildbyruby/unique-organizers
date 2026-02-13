@@ -1,56 +1,82 @@
-export const dynamic = 'force-dynamic';
-import prisma from '@/lib/prisma';
+"use client"
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
-  Package, 
-  ShoppingBag, 
-  Users, 
-  TrendingUp, 
-  Plus, 
-  ExternalLink,
-  ChevronRight,
-  Clock,
-  ShieldCheck
+  Package, ShoppingBag, Users, TrendingUp, Plus, 
+  ExternalLink, ChevronRight, Clock, ShieldCheck, Trash2, LayoutGrid, Loader2
 } from 'lucide-react';
 
-export default async function AdminDashboard() {
-  // 1. Fetch High-Level Stats with Error Handling
-  // Note: user role changed to CUSTOMER to match your schema.prisma
-  const [productCount, orderCount, userCount, recentOrders] = await Promise.all([
-    prisma.product.count(),
-    prisma.order.count(),
-    prisma.user.count({ where: { role: 'CUSTOMER' } }),
-    prisma.order.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      include: { 
-        user: true,
-        items: {
-          include: {
-            product: true
-          }
-        }
-      }
-    })
-  ]);
-
-  // Calculate total revenue (Success orders only)
-  const revenueData = await prisma.order.aggregate({
-    where: { paymentStatus: 'SUCCESS' },
-    _sum: { totalAmount: true }
-  });
+export default function AdminDashboard() {
+  const [products, setProducts] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [formLoading, setFormLoading] = useState(false);
   
-  const totalRevenue = revenueData._sum.totalAmount || 0;
+  // Form State
+  const [form, setForm] = useState({
+    name: '', description: '', retailPrice: '', wholesalePrice: '', 
+    category: 'ELECTRONICS', stock: '10', minWholesale: '3', 
+    images: '', colors: '' 
+  });
 
-  const stats = [
-    { label: 'Total Revenue', value: `KSh ${totalRevenue.toLocaleString()}`, icon: TrendingUp, color: 'text-emerald-400' },
-    { label: 'Orders', value: orderCount, icon: ShoppingBag, color: 'text-blue-400' },
-    { label: 'Products', value: productCount, icon: Package, color: 'text-purple-400' },
-    { label: 'Customers', value: userCount, icon: Users, color: 'text-pink-400' },
-  ];
+  // Load Data from our API
+  const refreshData = async () => {
+    try {
+      const res = await fetch('/api/products');
+      const data = await res.json();
+      setProducts(data);
+      
+      // Calculate basic stats from the product list for now
+      setStats([
+        { label: 'Total Value', value: `KSh ${data.reduce((a:any, b:any) => a + b.retailPrice, 0).toLocaleString()}`, icon: TrendingUp, color: 'text-emerald-400' },
+        { label: 'Products', value: data.length, icon: Package, color: 'text-purple-400' },
+        { label: 'In Stock', value: data.reduce((a:any, b:any) => a + b.stock, 0), icon: LayoutGrid, color: 'text-blue-400' },
+        { label: 'System Status', value: 'Active', icon: ShieldCheck, color: 'text-pink-400' },
+      ]);
+    } catch (e) {
+      console.error("Failed to fetch products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { refreshData(); }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormLoading(true);
+    const payload = {
+      ...form,
+      images: form.images.split(',').map(s => s.trim()).filter(s => s !== ""),
+      colors: form.colors.split(',').map(s => s.trim()).filter(s => s !== "")
+    };
+
+    await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    setForm({ name: '', description: '', retailPrice: '', wholesalePrice: '', category: 'ELECTRONICS', stock: '10', minWholesale: '3', images: '', colors: '' });
+    refreshData();
+    setFormLoading(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Destroy this asset record?')) return;
+    await fetch(`/api/products/${id}`, { method: 'DELETE' });
+    setProducts(products.filter(p => p.id !== id));
+  };
+
+  if (loading) return (
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white gap-4">
+      <Loader2 className="animate-spin text-purple-500" size={40} />
+      <p className="font-black uppercase tracking-widest text-[10px]">Syncing Database...</p>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-[#020203] text-slate-200 font-sans p-4 md:p-8">
+    <div className="min-h-screen bg-[#020203] text-slate-200 p-4 md:p-8">
       {/* HEADER */}
       <header className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
         <div>
@@ -67,9 +93,6 @@ export default async function AdminDashboard() {
           <Link href="/" className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2">
             <ExternalLink size={14} /> View Site
           </Link>
-          <Link href="/admin/products/new" className="px-5 py-2.5 rounded-xl bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-purple-500 transition-all shadow-lg shadow-purple-900/20 flex items-center gap-2">
-            <Plus size={14} /> Add Product
-          </Link>
         </div>
       </header>
 
@@ -77,11 +100,8 @@ export default async function AdminDashboard() {
         
         {/* STATS GRID */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, i) => (
+          {stats?.map((stat: any, i: number) => (
             <div key={i} className="bg-[#0a0a0c] border border-white/5 p-6 rounded-[2rem] relative overflow-hidden group">
-              <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <stat.icon size={100} />
-              </div>
               <stat.icon className={`${stat.color} mb-4`} size={24} />
               <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{stat.label}</p>
               <h3 className="text-2xl font-black text-white mt-1">{stat.value}</h3>
@@ -90,90 +110,70 @@ export default async function AdminDashboard() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* RECENT ORDERS TABLE */}
-          <div className="lg:col-span-2 bg-[#0a0a0c] border border-white/5 rounded-[2.5rem] overflow-hidden">
+          
+          {/* ADD PRODUCT FORM */}
+          <div className="bg-[#0a0a0c] border border-white/5 p-8 rounded-[2.5rem] h-fit sticky top-24">
+            <h3 className="text-lg font-black uppercase tracking-tighter mb-6 flex items-center gap-2">
+              <Plus size={18} className="text-purple-500" /> Deploy New Asset
+            </h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input placeholder="Name" className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
+              <textarea placeholder="Description" className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs h-20" value={form.description} onChange={e => setForm({...form, description: e.target.value})} required />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <input type="number" placeholder="Retail KSh" className="bg-white/5 border border-white/10 rounded-xl p-3 text-xs" value={form.retailPrice} onChange={e => setForm({...form, retailPrice: e.target.value})} required />
+                <input type="number" placeholder="Stock" className="bg-white/5 border border-white/10 rounded-xl p-3 text-xs" value={form.stock} onChange={e => setForm({...form, stock: e.target.value})} required />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Image URL</label>
+                <input placeholder="https://..." className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs font-mono" value={form.images} onChange={e => setForm({...form, images: e.target.value})} />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Hex Colors (#000000, #8A2BE2)</label>
+                <input placeholder="#hex, #hex" className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs font-mono" value={form.colors} onChange={e => setForm({...form, colors: e.target.value})} />
+              </div>
+
+              <button disabled={formLoading} className="w-full bg-purple-600 hover:bg-purple-500 text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                {formLoading ? 'Executing...' : 'Push to Live Store'}
+              </button>
+            </form>
+          </div>
+
+          {/* PRODUCT LIST (LIVE INVENTORY) */}
+          <div className="lg:col-span-2 bg-[#0a0a0c] border border-white/5 rounded-[2.5rem] overflow-hidden flex flex-col">
             <div className="p-8 border-b border-white/5 flex justify-between items-center">
               <h3 className="text-lg font-black uppercase tracking-tighter flex items-center gap-2">
-                <Clock size={18} className="text-purple-500" /> Recent Transactions
+                <Package size={18} className="text-purple-500" /> Live Catalog
               </h3>
-              <Link href="/admin/orders" className="text-[10px] font-black uppercase text-slate-500 hover:text-white">View All</Link>
+              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{products.length} Assets Active</span>
             </div>
-            <div className="overflow-x-auto">
-              {recentOrders.length > 0 ? (
-                <table className="w-full text-left">
-                  <thead className="bg-white/[0.02] text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">
-                    <tr>
-                      <th className="px-8 py-4">Ref</th>
-                      <th className="px-8 py-4">Customer/Contact</th>
-                      <th className="px-8 py-4">Amount</th>
-                      <th className="px-8 py-4">Status</th>
-                      <th className="px-8 py-4"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {recentOrders.map((order) => (
-                      <tr key={order.id} className="hover:bg-white/[0.01] transition-colors group">
-                        <td className="px-8 py-6 font-mono text-xs text-purple-400">{order.accountReference}</td>
-                        <td className="px-8 py-6">
-                          <p className="text-sm font-bold text-white">{order.user?.name || 'Guest User'}</p>
-                          <p className="text-[10px] text-slate-500">{order.phoneNumber}</p>
-                        </td>
-                        <td className="px-8 py-6 font-bold text-sm">KSh {order.totalAmount.toLocaleString()}</td>
-                        <td className="px-8 py-6">
-                          <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${
-                            order.paymentStatus === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-500' : 
-                            order.paymentStatus === 'FAILED' ? 'bg-red-500/10 text-red-500' : 
-                            'bg-blue-500/10 text-blue-500'
-                          }`}>
-                            {order.paymentStatus}
-                          </span>
-                        </td>
-                        <td className="px-8 py-6 text-right">
-                          <Link href={`/admin/orders/${order.id}`} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-white">
-                            <ChevronRight size={18} />
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="py-20 text-center">
-                   <p className="text-xs font-black uppercase tracking-widest text-slate-600">No transactions recorded yet</p>
+            
+            <div className="divide-y divide-white/5">
+              {products.map((product) => (
+                <div key={product.id} className="p-6 hover:bg-white/[0.02] transition-colors flex items-center gap-4 group">
+                  <div className="w-14 h-14 bg-white/10 rounded-xl overflow-hidden flex-shrink-0 border border-white/10">
+                    <img src={product.images[0]} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-bold text-white group-hover:text-purple-400 transition-colors uppercase tracking-tight">{product.name}</h4>
+                    <div className="flex gap-4 mt-1">
+                      <p className="text-[10px] font-mono text-slate-500 uppercase">KSh {product.retailPrice.toLocaleString()}</p>
+                      <p className="text-[10px] font-mono text-emerald-500 uppercase">Stock: {product.stock}</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => handleDelete(product.id)}
+                    className="p-3 text-slate-600 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
-              )}
+              ))}
             </div>
           </div>
 
-          {/* QUICK ACTIONS / ALERTS */}
-          <div className="space-y-6">
-            <div className="bg-gradient-to-br from-purple-600 to-indigo-700 p-8 rounded-[2.5rem] shadow-xl shadow-purple-900/20">
-              <h3 className="text-xl font-black uppercase tracking-tighter text-white">Network Health</h3>
-              <p className="text-purple-100 text-xs mt-2 leading-relaxed">System connected to Supabase PostgreSQL & M-Pesa Gateway.</p>
-              <div className="mt-6 bg-white/10 backdrop-blur-md rounded-2xl p-4 flex items-center justify-between border border-white/20">
-                <span className="text-[10px] font-black uppercase tracking-widest">Gateway: Active</span>
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_#34d399]" />
-              </div>
-            </div>
-
-            <div className="bg-[#0a0a0c] border border-white/5 p-8 rounded-[2.5rem]">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-6">Management Links</h3>
-              <div className="grid grid-cols-1 gap-3">
-                <Link href="/admin/products" className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-purple-500/50 transition-all text-xs font-bold flex justify-between items-center group">
-                  <span className="uppercase tracking-widest">Manage Catalog</span>
-                  <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                </Link>
-                <Link href="/admin/users" className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-purple-500/50 transition-all text-xs font-bold flex justify-between items-center group">
-                  <span className="uppercase tracking-widest">User Directory</span>
-                  <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                </Link>
-                <Link href="/admin/settings" className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-purple-500/50 transition-all text-xs font-bold flex justify-between items-center group">
-                  <span className="uppercase tracking-widest">API Settings</span>
-                  <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
-            </div>
-          </div>
         </div>
       </main>
       
