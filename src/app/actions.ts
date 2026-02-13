@@ -44,6 +44,39 @@ async function uploadToCloudinary(file: File): Promise<string> {
 }
 
 /**
+ * AUTH SYSTEM: Register a new user
+ * (This was missing and causing the Vercel build error)
+ */
+export async function registerUser(formData: FormData) {
+  try {
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    // Check if user already exists
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) return { success: false, message: "EMAIL_EXISTS" };
+
+    // Hash password and create user
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: "USER", // Default role
+      },
+    });
+
+    return { success: true, message: "REGISTRATION_SUCCESS" };
+  } catch (error) {
+    console.error("Registration Error:", error);
+    return { success: false, message: "REGISTRATION_FAILED" };
+  }
+}
+
+/**
  * ADMIN: Add Product
  */
 export async function addProduct(formData: FormData) {
@@ -83,7 +116,7 @@ export async function addProduct(formData: FormData) {
 }
 
 /**
- * ADMIN: Login
+ * AUTH SYSTEM: Login
  */
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
