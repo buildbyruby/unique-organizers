@@ -1,6 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 
-const prisma = new PrismaClient(); // move outside the component
+export const dynamic = 'force-dynamic'
 
 export default async function TestDBPage() {
   try {
