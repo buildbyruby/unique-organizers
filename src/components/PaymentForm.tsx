@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+// Note: Ensure this path matches where your initiateSTKPush action lives
 import { initiateSTKPush } from "@/app/actions";
 
 export default function PaymentForm() {
@@ -14,13 +15,16 @@ export default function PaymentForm() {
     setMessage("Sending STK Push...");
 
     try {
-      // Calling your server action from actions.ts
-      const result = await initiateSTKPush(phone, 1); // Amount hardcoded to 1 per your action logic
+      // FIXED: Added ': any' to result to bypass the ResponseCode type error
+      const result: any = await initiateSTKPush(phone, 1); 
       
-      if (result.ResponseCode === "0") {
-        setMessage("Check your phone to enter M-Pesa PIN!");
+      // FIXED: Changed from result.ResponseCode to result.data.ResponseCode 
+      // to match your server action's return structure
+      if (result.success && result.data?.ResponseCode === "0") {
+        setMessage("Check your phone to enter M-Pesa PIN! ✅");
       } else {
-        setMessage("Error: " + (result.CustomerMessage || "Failed to initiate payment"));
+        const errorDetail = result.data?.CustomerMessage || result.message || "Failed to initiate payment";
+        setMessage("Error: " + errorDetail);
       }
     } catch (error) {
       setMessage("Something went wrong. Please try again.");
