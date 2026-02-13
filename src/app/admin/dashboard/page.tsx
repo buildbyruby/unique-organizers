@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client'
+import prisma from '@/lib/prisma'
 import Link from 'next/link'
 
-const prisma = new PrismaClient()
+export const dynamic = 'force-dynamic'
 
 export default async function ClientDashboard() {
   // Hardcoded for demo; in production, we pull from session (e.g. NextAuth)

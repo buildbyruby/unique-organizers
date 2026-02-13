@@ -2,6 +2,8 @@ import { createProduct } from '../../actions'
 import Link from 'next/link'
 import { ArrowLeft, Save, Sparkles, Tag, CircleDollarSign } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default function NewProductPage() {
   return (
     <div className="min-h-screen bg-[#020203] text-white p-8 font-sans">
