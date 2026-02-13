@@ -156,9 +156,20 @@ export async function addProduct(formData: FormData) {
 }
 
 /**
- * PAYMENT: M-Pesa STK Push (Remains the same logic)
+ * PAYMENT: M-Pesa STK Push
  */
 export async function initiateSTKPush(phoneNumber: string, amount: number) {
-    // ... This function doesn't use the DB directly, so keep your existing M-Pesa logic here ...
-    // Copy/Paste your existing M-Pesa code here.
+  try {
+    const { initiateStkPush } = await import('@/lib/mpesa')
+    const reference = `ORD-${Math.random().toString(36).toUpperCase().slice(2, 10)}`
+    const data = await initiateStkPush(phoneNumber, amount, reference)
+    
+    return { 
+      success: data.ResponseCode === "0", 
+      message: data.CustomerMessage || data.errorMessage || "STK Push initiated" 
+    }
+  } catch (error) {
+    console.error("M-Pesa STK Error:", error)
+    return { success: false, message: "Failed to connect to M-Pesa" }
+  }
 }
