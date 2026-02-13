@@ -6,7 +6,11 @@
     "dev": "next dev --turbo --hostname 0.0.0.0 --port 5000",
     "build": "prisma generate && next build",
     "start": "next start --hostname 0.0.0.0 --port 5000",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma generate"
+  },
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.0",
@@ -33,6 +37,7 @@
     "postcss": "^8.5.6",
     "prisma": "^7.4.0",
     "tailwindcss": "^4.0.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
   }
 }
