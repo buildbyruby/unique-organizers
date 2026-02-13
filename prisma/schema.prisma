@@ -12,6 +12,8 @@ model Product {
   description    String
   retailPrice    Float
   wholesalePrice Float
+  stock          Int         @default(0)
+  minWholesale   Int         @default(1)
   category       String
   images         String[]
   colors         String[]
@@ -26,6 +28,7 @@ enum OrderStatus {
   FAILED
   SHIPPED
   DELIVERED
+  PROCESSING
 }
 
 model User {
@@ -41,11 +44,12 @@ model User {
 
 model Order {
   id               String      @id @default(cuid())
-  userId           String
-  user             User        @relation(fields: [userId], references: [id])
+  userId           String?
+  user             User?       @relation(fields: [userId], references: [id])
   items            OrderItem[]
   status           OrderStatus @default(PENDING)
   accountReference String      @unique @default("N/A")
+  phoneNumber      String?
   totalAmount      Float       @default(0)
   paymentStatus    String      @default("PENDING")
   createdAt        DateTime    @default(now())
@@ -58,6 +62,7 @@ model OrderItem {
   productId String
   quantity  Int
   price     Float   @default(0)
+  color     String?
   order     Order   @relation(fields: [orderId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
 }
