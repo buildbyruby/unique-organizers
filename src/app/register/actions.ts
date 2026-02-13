@@ -100,7 +100,6 @@ export async function addProduct(formData: FormData) {
         stock: parseInt(formData.get("stock") as string) || 0,
         colors: formData.getAll("colors") as string[],
         images: imageUrls,
-        inStock: true,
       }
     });
 
