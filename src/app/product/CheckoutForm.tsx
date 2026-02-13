@@ -21,11 +21,12 @@ export default function CheckoutForm({ amount, productName }: { amount: number, 
 
       if (result.success) {
         setIsSuccess(true)
-        setMessage(result.message)
-        // Optionally: Start a timer to poll the database to see if payment changed to SUCCESS
+        // FIXED: Added ?? fallback to ensure message is never 'undefined'
+        setMessage(result.message ?? "STK Push sent! Please check your phone.")
       } else {
         setIsSuccess(false)
-        setMessage(result.message)
+        // FIXED: Added ?? fallback to ensure message is never 'undefined'
+        setMessage(result.message ?? "Payment failed. Please try again.")
       }
     } catch (err) {
       setMessage("An error occurred. Check your connection.")
