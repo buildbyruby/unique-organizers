@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
+// @ts-ignore - This tells TypeScript to stop complaining about 'pg'
 import pg from 'pg'
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient }
@@ -7,11 +8,9 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient }
 function createPrismaClient() {
   const connectionString = process.env.DATABASE_URL
 
-  // Configure the PG Pool to handle Supabase's SSL requirements
   const pool = new pg.Pool({ 
     connectionString,
     ssl: {
-      // This specifically addresses the "self-signed certificate in certificate chain" error
       rejectUnauthorized: false 
     }
   })
