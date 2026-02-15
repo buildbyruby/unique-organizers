@@ -198,15 +198,15 @@ export default async function HomePage(props: {
 
       {/* --- CATEGORY FILTERS --- */}
       <section className="py-6 px-4 md:px-8 sticky top-[58px] z-40 backdrop-blur-xl bg-[#050505]/80 border-b border-white/5 shadow-2xl shadow-black">
-        <div className="max-w-7xl mx-auto flex items-center gap-3 overflow-x-auto no-scrollbar scroll-smooth pb-2">
-          <Link href="/" className={`whitespace-nowrap px-6 md:px-8 py-3 rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${!category ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-white/[0.03] text-gray-400 border border-white/5 hover:border-white/20 hover:text-white'}`}>
+        <div className="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth pb-2">
+          <Link href="/" className={`whitespace-nowrap px-5 md:px-8 py-3 rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${!category ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-white/[0.03] text-gray-400 border border-white/5 hover:border-white/20 hover:text-white'}`}>
             Complete Archive
           </Link>
           {categories.map((cat) => (
             <Link 
               key={cat}
               href={`/?category=${cat}`} 
-              className={`whitespace-nowrap px-6 md:px-8 py-3 rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${category === cat ? 'bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.4)] border border-purple-500' : 'bg-white/[0.03] text-gray-400 border border-white/5 hover:border-white/20 hover:text-white'}`}
+              className={`whitespace-nowrap px-5 md:px-8 py-3 rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${category === cat ? 'bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.4)] border border-purple-500' : 'bg-white/[0.03] text-gray-400 border border-white/5 hover:border-white/20 hover:text-white'}`}
             >
               {cat.replace('_', ' ')}
             </Link>
@@ -215,15 +215,15 @@ export default async function HomePage(props: {
       </section>
 
       {/* --- PRODUCT GRID (MOBILE 2-COLUMNS FIX) --- */}
-      <section id="catalog" className="py-16 md:py-24 px-4 md:px-8 bg-[#020202]">
+      <section id="catalog" className="py-10 md:py-24 px-2 md:px-8 bg-[#020202]">
         <div className="max-w-7xl mx-auto">
           
-          <div className="mb-10 flex items-end justify-between">
+          <div className="mb-6 md:mb-10 flex items-end justify-between px-2">
             <div>
-              <h2 className="text-3xl font-black uppercase italic tracking-tighter">
+              <h2 className="text-xl md:text-3xl font-black uppercase italic tracking-tighter">
                 {query ? 'Search Results' : category ? category.replace('_', ' ') : 'Featured Assets'}
               </h2>
-              <p className="text-gray-500 text-sm mt-2 font-medium">Discover equipment tailored to your aesthetic.</p>
+              <p className="text-gray-500 text-[10px] md:text-sm mt-1 font-medium">Elevate your aesthetic.</p>
             </div>
             <div className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-purple-400 bg-purple-500/10 px-4 py-2 rounded-full">
               <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"/> Live Inventory
@@ -231,55 +231,46 @@ export default async function HomePage(props: {
           </div>
 
           {products.length > 0 ? (
-            /* We changed grid-cols-1 to grid-cols-2 here for mobile */
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-8">
+            /* FIX: Strict 2 columns on mobile, smaller gap for cleaner look */
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-8">
               {products.map((product) => (
                 <Link 
                   key={product.id} 
                   href={`/product/${product.id}`}
-                  className="group bg-gradient-to-b from-[#0f0f12] to-[#0a0a0c] rounded-[1.5rem] md:rounded-[2.5rem] border border-white/5 p-2 md:p-3 transition-all duration-500 hover:border-purple-500/50 hover:shadow-[0_20px_40px_-15px_rgba(147,51,234,0.3)] flex flex-col"
+                  className="group bg-gradient-to-b from-[#0f0f12] to-[#0a0a0c] rounded-[1.2rem] md:rounded-[2.5rem] border border-white/5 p-1.5 md:p-3 transition-all duration-500 hover:border-purple-500/50 flex flex-col"
                 >
-                  <div className="aspect-[4/5] rounded-[1rem] md:rounded-[2rem] overflow-hidden bg-black relative shadow-inner">
+                  {/* FIX: Square aspect ratio on mobile so cards are shorter */}
+                  <div className="aspect-square md:aspect-[4/5] rounded-[0.8rem] md:rounded-[2rem] overflow-hidden bg-black relative shadow-inner">
                     <img 
                       src={product.images[0] || "/api/placeholder/400/500"} 
                       alt={product.name} 
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100" 
                     />
                     
-                    {product.colors && product.colors.length > 0 && (
-                      <div className="absolute bottom-4 left-4 hidden md:flex gap-1.5 bg-black/60 backdrop-blur-md p-2 rounded-full border border-white/10 shadow-lg">
-                        {product.colors.slice(0, 4).map((color, idx) => (
-                          <div 
-                            key={idx} 
-                            style={{ backgroundColor: color }} 
-                            className="w-3.5 h-3.5 rounded-full border border-white/20 shadow-sm"
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="absolute top-2 left-2 md:top-4 md:left-4 bg-black/80 backdrop-blur-md px-2 md:px-4 py-1 md:py-1.5 rounded-full border border-white/10 text-[7px] md:text-[9px] font-black uppercase tracking-widest text-gray-300">
+                    <div className="absolute top-2 left-2 md:top-4 md:left-4 bg-black/80 backdrop-blur-md px-2 md:px-4 py-1 md:py-1.5 rounded-full border border-white/10 text-[6px] md:text-[9px] font-black uppercase tracking-widest text-gray-300">
                       {product.category.replace('_', ' ')}
                     </div>
                     
-                    <div className="absolute bottom-4 right-4 w-10 h-10 md:w-12 md:h-12 bg-white text-black rounded-full hidden md:flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.4)]">
+                    <div className="absolute bottom-4 right-4 w-10 h-10 md:w-12 md:h-12 bg-white text-black rounded-full hidden md:flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
                         <ArrowUpRight size={20} className="group-hover:rotate-45 transition-transform" />
                     </div>
                   </div>
                   
-                  <div className="p-3 md:p-5 flex-1 flex flex-col">
-                    <h3 className="text-xs md:text-lg font-black tracking-tight mb-2 uppercase group-hover:text-purple-300 transition-colors line-clamp-1">{product.name}</h3>
+                  <div className="p-2 md:p-5 flex-1 flex flex-col">
+                    {/* FIX: Smaller font on mobile to prevent wrapping/clutter */}
+                    <h3 className="text-[10px] md:text-lg font-black tracking-tight mb-1 md:mb-2 uppercase group-hover:text-purple-300 transition-colors line-clamp-1">{product.name}</h3>
                     
-                    <div className="mt-auto pt-3 md:pt-5 flex flex-col md:flex-row justify-between items-start md:items-end border-t border-white/5 relative">
+                    <div className="mt-auto pt-2 md:pt-5 flex justify-between items-end border-t border-white/5">
                       <div>
-                        <span className="text-[7px] md:text-[9px] text-gray-500 block uppercase font-black tracking-widest mb-0.5 md:mb-1">Price</span>
-                        <p className="text-sm md:text-xl font-black tracking-tighter text-white italic drop-shadow-md">
-                          <span className="text-purple-400 mr-1 text-[10px] md:text-sm font-bold not-italic">KSh</span>
+                        {/* Hidden "Price" label on mobile for cleaner look */}
+                        <span className="hidden md:block text-[9px] text-gray-500 uppercase font-black tracking-widest mb-1">Price</span>
+                        <p className="text-xs md:text-xl font-black tracking-tighter text-white italic">
+                          <span className="text-purple-400 mr-0.5 text-[8px] md:text-sm font-bold not-italic">KSh</span>
                           {product.retailPrice.toLocaleString()}
                         </p>
                       </div>
-                      <div className="hidden md:flex bg-white/5 p-3 rounded-2xl group-hover:bg-purple-600 transition-colors border border-white/5 group-hover:border-purple-500">
-                        <ShoppingCart size={18} className="text-white" />
+                      <div className="p-1.5 md:p-3 rounded-xl bg-white/5 md:bg-white/5 md:rounded-2xl group-hover:bg-purple-600 transition-colors border border-white/5">
+                        <ShoppingCart size={14} className="text-white md:w-[18px] md:h-[18px]" />
                       </div>
                     </div>
                   </div>
@@ -287,14 +278,11 @@ export default async function HomePage(props: {
               ))}
             </div>
           ) : (
-            <div className="py-32 md:py-48 text-center border-2 border-dashed border-white/10 rounded-[3rem] bg-white/[0.01] backdrop-blur-sm">
-                <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 relative">
-                  <div className="absolute inset-0 border border-white/20 rounded-full animate-ping opacity-20" />
-                  <Globe size={32} className="text-gray-500" />
-                </div>
-                <h3 className="text-2xl font-black uppercase tracking-widest text-white mb-3 italic">Signal Lost</h3>
-                <p className="text-gray-400 font-bold uppercase text-xs tracking-widest px-4 max-w-md mx-auto">
-                  We couldn't locate any items matching your exact parameters. Adjust your filters or explore the full archive.
+            <div className="py-24 md:py-48 text-center border-2 border-dashed border-white/10 rounded-[2rem] md:rounded-[3rem] bg-white/[0.01] backdrop-blur-sm mx-2">
+                <Globe size={32} className="text-gray-500 mx-auto mb-6" />
+                <h3 className="text-xl md:text-2xl font-black uppercase tracking-widest text-white mb-3 italic">Signal Lost</h3>
+                <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest px-4 max-w-md mx-auto">
+                  No items match your scanners. Reset filters to see the archive.
                 </p>
                 <Link href="/" className="inline-block mt-8 bg-white text-black px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-colors">
                   Reset Scanners
@@ -304,7 +292,7 @@ export default async function HomePage(props: {
         </div>
       </section>
 
-      {/* --- WARM / HUMAN ABOUT US SECTION (FULLY RESTORED) --- */}
+      {/* --- WARM / HUMAN ABOUT US SECTION --- */}
       <section className="py-24 px-6 border-t border-white/5 bg-[#050505] relative overflow-hidden">
         <div className="absolute -left-40 top-20 w-96 h-96 bg-purple-900/20 blur-[150px] rounded-full" />
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center relative z-10">
@@ -361,13 +349,6 @@ export default async function HomePage(props: {
               alt="Premium Organized Space" 
               className="w-full h-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-1000"
             />
-            <div className="absolute bottom-12 left-12 z-20 space-y-2 transform group-hover:-translate-y-2 transition-transform duration-700">
-              <div className="flex items-center gap-3">
-                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                 <div className="text-[10px] font-black uppercase tracking-[0.4em] text-white/80 backdrop-blur-md px-3 py-1 rounded-full bg-white/10 border border-white/20">Active Node</div>
-              </div>
-              <div className="text-5xl font-black tracking-tighter italic drop-shadow-lg">NBO_254</div>
-            </div>
           </div>
         </div>
       </section>
