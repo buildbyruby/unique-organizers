@@ -123,7 +123,6 @@ export default async function HomePage(props: {
 
       {/* --- HERO SECTION --- */}
       <section className="relative pt-24 md:pt-36 pb-20 md:pb-32 px-6 overflow-hidden flex items-center min-h-[70vh]">
-        {/* Animated Background Orbs */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl h-[400px] md:h-[600px] bg-purple-600/15 blur-[120px] rounded-full pointer-events-none mix-blend-screen animate-pulse duration-10000" />
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none" />
         
@@ -164,7 +163,7 @@ export default async function HomePage(props: {
         </div>
       </section>
 
-      {/* --- TRUST PILLARS (The Human Element) --- */}
+      {/* --- TRUST PILLARS --- */}
       <section className="border-y border-white/5 bg-black/40 backdrop-blur-lg relative z-20">
         <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-white/10">
           <div className="flex items-center gap-4 pt-4 md:pt-0 md:px-6 group">
@@ -215,7 +214,7 @@ export default async function HomePage(props: {
         </div>
       </section>
 
-      {/* --- PRODUCT GRID --- */}
+      {/* --- PRODUCT GRID (MOBILE 2-COLUMNS FIX) --- */}
       <section id="catalog" className="py-16 md:py-24 px-4 md:px-8 bg-[#020202]">
         <div className="max-w-7xl mx-auto">
           
@@ -232,14 +231,15 @@ export default async function HomePage(props: {
           </div>
 
           {products.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+            /* We changed grid-cols-1 to grid-cols-2 here for mobile */
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-8">
               {products.map((product) => (
                 <Link 
                   key={product.id} 
                   href={`/product/${product.id}`}
-                  className="group bg-gradient-to-b from-[#0f0f12] to-[#0a0a0c] rounded-[2.5rem] border border-white/5 p-3 transition-all duration-500 hover:-translate-y-2 hover:border-purple-500/50 hover:shadow-[0_20px_40px_-15px_rgba(147,51,234,0.3)] flex flex-col"
+                  className="group bg-gradient-to-b from-[#0f0f12] to-[#0a0a0c] rounded-[1.5rem] md:rounded-[2.5rem] border border-white/5 p-2 md:p-3 transition-all duration-500 hover:border-purple-500/50 hover:shadow-[0_20px_40px_-15px_rgba(147,51,234,0.3)] flex flex-col"
                 >
-                  <div className="aspect-[4/5] rounded-[2rem] overflow-hidden bg-black relative shadow-inner">
+                  <div className="aspect-[4/5] rounded-[1rem] md:rounded-[2rem] overflow-hidden bg-black relative shadow-inner">
                     <img 
                       src={product.images[0] || "/api/placeholder/400/500"} 
                       alt={product.name} 
@@ -247,7 +247,7 @@ export default async function HomePage(props: {
                     />
                     
                     {product.colors && product.colors.length > 0 && (
-                      <div className="absolute bottom-4 left-4 flex gap-1.5 bg-black/60 backdrop-blur-md p-2 rounded-full border border-white/10 shadow-lg">
+                      <div className="absolute bottom-4 left-4 hidden md:flex gap-1.5 bg-black/60 backdrop-blur-md p-2 rounded-full border border-white/10 shadow-lg">
                         {product.colors.slice(0, 4).map((color, idx) => (
                           <div 
                             key={idx} 
@@ -258,27 +258,27 @@ export default async function HomePage(props: {
                       </div>
                     )}
 
-                    <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-[9px] font-black uppercase tracking-widest text-gray-300">
+                    <div className="absolute top-2 left-2 md:top-4 md:left-4 bg-black/80 backdrop-blur-md px-2 md:px-4 py-1 md:py-1.5 rounded-full border border-white/10 text-[7px] md:text-[9px] font-black uppercase tracking-widest text-gray-300">
                       {product.category.replace('_', ' ')}
                     </div>
                     
-                    <div className="absolute bottom-4 right-4 w-12 h-12 bg-white text-black rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.4)]">
+                    <div className="absolute bottom-4 right-4 w-10 h-10 md:w-12 md:h-12 bg-white text-black rounded-full hidden md:flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.4)]">
                         <ArrowUpRight size={20} className="group-hover:rotate-45 transition-transform" />
                     </div>
                   </div>
                   
-                  <div className="p-5 flex-1 flex flex-col">
-                    <h3 className="text-lg font-black tracking-tight mb-2 uppercase group-hover:text-purple-300 transition-colors line-clamp-1">{product.name}</h3>
+                  <div className="p-3 md:p-5 flex-1 flex flex-col">
+                    <h3 className="text-xs md:text-lg font-black tracking-tight mb-2 uppercase group-hover:text-purple-300 transition-colors line-clamp-1">{product.name}</h3>
                     
-                    <div className="mt-auto pt-5 flex justify-between items-end border-t border-white/5 relative">
+                    <div className="mt-auto pt-3 md:pt-5 flex flex-col md:flex-row justify-between items-start md:items-end border-t border-white/5 relative">
                       <div>
-                        <span className="text-[9px] text-gray-500 block uppercase font-black tracking-widest mb-1">Acquisition Value</span>
-                        <p className="text-xl font-black tracking-tighter text-white italic drop-shadow-md">
-                          <span className="text-purple-400 mr-1 text-sm font-bold not-italic">KSh</span>
+                        <span className="text-[7px] md:text-[9px] text-gray-500 block uppercase font-black tracking-widest mb-0.5 md:mb-1">Price</span>
+                        <p className="text-sm md:text-xl font-black tracking-tighter text-white italic drop-shadow-md">
+                          <span className="text-purple-400 mr-1 text-[10px] md:text-sm font-bold not-italic">KSh</span>
                           {product.retailPrice.toLocaleString()}
                         </p>
                       </div>
-                      <div className="bg-white/5 p-3 rounded-2xl group-hover:bg-purple-600 transition-colors border border-white/5 group-hover:border-purple-500">
+                      <div className="hidden md:flex bg-white/5 p-3 rounded-2xl group-hover:bg-purple-600 transition-colors border border-white/5 group-hover:border-purple-500">
                         <ShoppingCart size={18} className="text-white" />
                       </div>
                     </div>
@@ -304,7 +304,7 @@ export default async function HomePage(props: {
         </div>
       </section>
 
-      {/* --- WARM / HUMAN ABOUT US SECTION --- */}
+      {/* --- WARM / HUMAN ABOUT US SECTION (FULLY RESTORED) --- */}
       <section className="py-24 px-6 border-t border-white/5 bg-[#050505] relative overflow-hidden">
         <div className="absolute -left-40 top-20 w-96 h-96 bg-purple-900/20 blur-[150px] rounded-full" />
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center relative z-10">
