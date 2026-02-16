@@ -54,14 +54,14 @@ export default function ProductPage() {
     <div className="min-h-screen bg-[#050505] text-white pt-10 pb-20 px-6">
       <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-start">
         
-        {/* LEFT: DYNAMIC IMAGE GALLERY */}
-        <div className="space-y-4 sticky top-28">
+        {/* LEFT: DYNAMIC IMAGE GALLERY - Fix: Sticky only on desktop to prevent mobile overlap */}
+        <div className="space-y-4 md:sticky md:top-28">
           <div 
             className="aspect-square bg-white/5 rounded-[2.5rem] overflow-hidden border-2 relative group shadow-2xl transition-all duration-500"
             style={{ borderColor: selectedColor ? selectedColor : 'rgba(255,255,255,0.05)' }}
           >
             <img src={product.images[activeImage]} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-            <div className="absolute top-6 left-6 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10">
+            <div className="absolute top-6 left-6 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 z-10">
               {product.category}
             </div>
           </div>
@@ -84,7 +84,7 @@ export default function ProductPage() {
             <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-gray-500 hover:text-white mb-6 text-xs font-bold uppercase tracking-widest transition-colors">
               <ChevronLeft size={14} /> Directory
             </button>
-            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-tight mb-4 italic">{product.name}</h1>
+            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-tight mb-4 italic text-white">{product.name}</h1>
             <div className="flex items-center gap-4 text-purple-400">
               <div className="flex text-yellow-500"><Star fill="currentColor" size={14} /><Star fill="currentColor" size={14} /><Star fill="currentColor" size={14} /><Star fill="currentColor" size={14} /><Star fill="currentColor" size={14} /></div>
               <span className="text-[10px] font-black tracking-[0.2em] opacity-60 uppercase">Verified Stock</span>
