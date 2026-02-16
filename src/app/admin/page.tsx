@@ -42,8 +42,8 @@ export default function AdminDashboard() {
     if(typeof window !== 'undefined' && window.cloudinary) {
       // @ts-ignore
       const widget = window.cloudinary.createUploadWidget({
-        cloudName: 'demo', 
-        uploadPreset: 'default-preset', 
+        cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME, 
+        uploadPreset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET, 
       }, (error: any, result: any) => {
         if (!error && result && result.event === "success") {
           const newUrl = result.info.secure_url;
@@ -52,7 +52,7 @@ export default function AdminDashboard() {
       });
       widget.open();
     } else {
-      alert("Cloudinary script loading...");
+      alert("Cloudinary script loading... Please wait a second and try again.");
     }
   };
 
