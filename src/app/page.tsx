@@ -16,7 +16,9 @@ import {
   LayoutGrid,
   Quote,
   MessageCircle,
-  History
+  History,
+  Lock,
+  UserCheck
 } from 'lucide-react';
 import { Metadata } from 'next';
 
@@ -85,7 +87,7 @@ export default async function HomePage(props: {
       suppressHydrationWarning 
       className="min-h-screen bg-[#F8F9FA] text-slate-900 selection:bg-purple-300/50 font-sans antialiased overflow-x-hidden relative"
     >
-      {/* --- WHATSAPP FLOATING CONTACT (HIGHEST Z-INDEX TO STAY IN FRONT) --- */}
+      {/* --- WHATSAPP FLOATING CONTACT --- */}
       <a 
         href="https://wa.me/254797517565?text=Hello%20Unique%20Organizers,%20I'm%20interested%20in%20your%20premium%20assets." 
         target="_blank" 
@@ -101,7 +103,7 @@ export default async function HomePage(props: {
         </div>
       </a>
 
-      {/* --- CYBER-LUXURY AMBIENT BACKGROUND (LOWERED Z-INDEX) --- */}
+      {/* --- CYBER-LUXURY AMBIENT BACKGROUND --- */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] bg-purple-400/20 blur-[150px] rounded-full mix-blend-multiply animate-pulse duration-[10000ms]" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] bg-indigo-400/20 blur-[150px] rounded-full mix-blend-multiply animate-pulse duration-[8000ms]" />
@@ -115,7 +117,7 @@ export default async function HomePage(props: {
         <span className="text-[9px] font-black uppercase tracking-[0.25em] text-white/90">Premium Stock Arrived • 24H Rapid Dispatch Available</span>
       </div>
 
-      {/* --- ULTRA-MODERN NAVIGATION (BUMPED Z-INDEX TO BE IN FRONT OF ALL LETTERS) --- */}
+      {/* --- ULTRA-MODERN NAVIGATION --- */}
       <nav className="sticky top-0 w-full z-[100] backdrop-blur-2xl border-b border-white/40 bg-white/40 transition-all shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
           <Link href="/" className="text-xl md:text-2xl font-black tracking-tighter flex items-center gap-3 group">
@@ -140,17 +142,20 @@ export default async function HomePage(props: {
             </form>
           </div>
 
-          <div className="flex items-center space-x-4 md:space-x-8">
+          <div className="flex items-center space-x-3 md:space-x-6">
+            {/* --- THE ADMIN BUTTON (HIGH VISIBILITY) --- */}
+            <Link 
+              href="/admin/login" 
+              className="flex items-center gap-2 px-4 py-2 bg-slate-100 border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-900 hover:text-white transition-all duration-300 shadow-sm"
+            >
+              <Lock size={14} /> 
+              <span className="hidden xs:block">Admin</span>
+            </Link>
+
             <Link href="/dashboard" className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-purple-700 transition-colors">
               <ShoppingBag size={18} className="text-purple-600" /> Orders
             </Link>
             
-            {/* Stash (Cart) Trigger Button */}
-            <button className="relative group text-slate-600 hover:text-purple-700 transition-colors">
-               <ShoppingCart size={18} />
-               <span className="absolute -top-2 -right-2 bg-slate-900 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">0</span>
-            </button>
-
             <Link
               href="/dashboard"
               className="relative group overflow-hidden bg-slate-900 text-white px-6 md:px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_8px_25px_rgba(147,51,234,0.3)] transition-all active:scale-95"
@@ -284,7 +289,7 @@ export default async function HomePage(props: {
         </div>
       </section>
 
-      {/* --- UPDATED CLIENT PANEL SECTION (FOCUSED ON ORDERS) --- */}
+      {/* --- CLIENT PANEL SECTION --- */}
       <section className="py-24 md:py-32 px-6 relative overflow-hidden z-10">
         <div className="absolute inset-0 bg-white/40 backdrop-blur-[100px] border-t border-white/60" />
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center relative">
@@ -296,7 +301,6 @@ export default async function HomePage(props: {
               </h2>
             </div>
             
-            {/* SINGLE FOCUSED ORDERS CARD */}
             <Link href="/dashboard" className="block p-10 rounded-[3rem] bg-slate-900 text-white shadow-[0_30px_60px_rgba(0,0,0,0.2)] hover:shadow-[0_40px_80px_rgba(147,51,234,0.3)] transition-all group relative overflow-hidden">
                <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/20 blur-[100px] group-hover:bg-purple-600/40 transition-colors" />
                <div className="relative z-10 flex items-center gap-6">
@@ -326,10 +330,23 @@ export default async function HomePage(props: {
         </div>
       </section>
 
-      <footer className="border-t border-white/50 py-12 px-8 bg-white/30 backdrop-blur-3xl relative z-10 text-center md:text-left">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <span className="text-2xl font-black tracking-tighter italic text-slate-900">UNIQUE <span className="text-purple-700">ORGANIZERS</span></span>
-          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.4em]">© 2026 - ALL RIGHTS RESERVED</p>
+      {/* --- FOOTER --- */}
+      <footer className="border-t border-white/50 py-16 px-8 bg-white/30 backdrop-blur-3xl relative z-10">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
+          <div className="flex flex-col items-center md:items-start">
+            <span className="text-2xl font-black tracking-tighter italic text-slate-900">UNIQUE <span className="text-purple-700">ORGANIZERS</span></span>
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2">© 2026 - ALL RIGHTS RESERVED</p>
+          </div>
+
+          {/* SECONDARY ADMIN LINK IN FOOTER */}
+          <div className="flex flex-col items-center gap-4">
+             <Link 
+               href="/admin/login" 
+               className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-purple-600 hover:border-purple-200 transition-all shadow-sm"
+             >
+                <UserCheck size={14} /> Staff Authorization Area
+             </Link>
+          </div>
         </div>
       </footer>
     </div>
