@@ -12,6 +12,7 @@ interface ActionResponse {
   success: boolean;
   message: string;
   role?: string;
+  data?: any;
 }
 
 async function uploadToCloudinary(file: File): Promise<string> {
@@ -85,7 +86,11 @@ export async function addProduct(formData: FormData): Promise<ActionResponse> {
   } catch (error) { return { success: false, message: "FIREBASE_WRITE_ERROR" }; }
 }
 
-// STUB to stop the build from crashing until you delete CheckoutForm.tsx
-export async function initiateSTKPush() {
-  return { success: false, message: "Please use WhatsApp for orders." };
+// FIXED: Accept arguments to match PaymentForm.tsx calls
+export async function initiateSTKPush(phone?: string, amount?: number): Promise<ActionResponse> {
+  return { 
+    success: false, 
+    message: "Payment system moving to WhatsApp. Please contact +254 797 517 565",
+    data: { ResponseCode: "1" } 
+  };
 }
