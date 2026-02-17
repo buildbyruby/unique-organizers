@@ -1,5 +1,4 @@
 "use client"
-
 import { createContext, useContext, useState, useEffect } from 'react';
 
 type CartItem = {
@@ -31,7 +30,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const activePrice = pricingTier === 'wholesale' ? product.wholesalePrice : product.retailPrice;
 
     setCart(prev => {
-      // Find exact match of product, color, AND pricing tier
       const existing = prev.find(item => item.id === product.id && item.color === color && item.pricingTier === pricingTier);
       
       if (existing) {
@@ -41,8 +39,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             : item
         );
       }
-      
-      setIsOpen(true); 
       return [...prev, { 
         id: product.id, 
         name: product.name, 
@@ -53,6 +49,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         pricingTier: pricingTier
       }];
     });
+    
+    // MOVE THIS HERE: Always open the sidebar when adding
+    setIsOpen(true); 
   };
 
   const removeFromCart = (id: string, color: string, pricingTier: string) => {
@@ -62,8 +61,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const checkout = () => {
     const phone = "254797517565"; 
     let message = `*NEW SYSTEM ORDER* 📦%0A%0A`;
-    
     let total = 0;
+
     cart.forEach(item => {
       const lineTotal = item.price * item.quantity;
       total += lineTotal;
