@@ -1,20 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     await prisma.review.delete({
       where: { id },
     });
 
-    return NextResponse.json({ success: true, message: 'Review purged from system' });
+    return NextResponse.json({ success: true, message: 'Review successfully purged' });
   } catch (error) {
-    console.error('Purge error:', error);
+    console.error('Delete Error:', error);
     return NextResponse.json({ error: 'Failed to delete review' }, { status: 500 });
   }
 }

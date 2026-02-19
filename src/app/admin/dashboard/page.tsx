@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Package, Plus, ExternalLink, Trash2, Loader2, LayoutGrid, ImagePlus, ChevronDown, CheckCircle2, MessageSquare, Star, ShieldCheck } from 'lucide-react';
+import { Package, Plus, ExternalLink, Trash2, Loader2, LayoutGrid, ImagePlus, ChevronDown, CheckCircle2, MessageSquare, Star, ShieldCheck, RefreshCcw } from 'lucide-react';
 import { updateProductCategory } from '@/app/actions';
 
 const COLOR_PRESETS = [
@@ -36,6 +36,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [formLoading, setFormLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const [form, setForm] = useState({
     name: '', description: '', retailPrice: '', wholesalePrice: '', 
@@ -45,6 +46,7 @@ export default function AdminDashboard() {
   });
 
   const refreshData = async () => {
+    setIsRefreshing(true);
     try {
       const [prodRes, revRes] = await Promise.all([
         fetch('/api/products'),
@@ -53,17 +55,19 @@ export default function AdminDashboard() {
       const prodData = await prodRes.json();
       const revData = await revRes.json();
       
-      setProducts(prodData);
-      setReviews(revData);
+      setProducts(Array.isArray(prodData) ? prodData : []);
+      setReviews(Array.isArray(revData) ? revData : []);
     } catch (e) {
       console.error("Failed to fetch system data");
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
   useEffect(() => { refreshData(); }, []);
 
+  // UPDATE CATEGORY IN INVENTORY
   const handleCategoryChange = async (productId: string, newCategory: string) => {
     setUpdatingId(productId);
     const result = await updateProductCategory(productId, newCategory);
@@ -73,6 +77,7 @@ export default function AdminDashboard() {
     setTimeout(() => setUpdatingId(null), 1000);
   };
 
+  // CLOUDINARY UPLOAD
   const openCloudinary = () => {
     // @ts-ignore
     if(typeof window !== 'undefined' && window.cloudinary) {
@@ -149,12 +154,22 @@ export default function AdminDashboard() {
           </div>
           <h1 className="text-4xl font-black tracking-tighter text-black uppercase italic">Command <span className="text-purple-600">Center</span></h1>
         </div>
-        <Link href="/" className="px-6 py-3 rounded-full bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 transition-all flex items-center gap-2 shadow-xl shadow-black/10">
-          <ExternalLink size={14} /> Exit Storefront
-        </Link>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={refreshData} 
+            className="p-3 bg-white border border-slate-200 rounded-full hover:bg-slate-100 text-purple-600 transition-all shadow-sm"
+          >
+            <RefreshCcw size={18} className={isRefreshing ? 'animate-spin' : ''} />
+          </button>
+          <Link href="/" className="px-6 py-3 rounded-full bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 transition-all flex items-center gap-2 shadow-xl shadow-black/10">
+            <ExternalLink size={14} /> Exit Storefront
+          </Link>
+        </div>
       </header>
 
       <main className="max-w-7xl mx-auto grid lg:grid-cols-3 gap-10">
+        
+        {/* ADD NEW ASSET FORM */}
         <div className="bg-white border border-slate-200 p-6 md:p-8 rounded-[2.5rem] h-fit lg:sticky lg:top-8 shadow-sm">
           <h3 className="text-sm font-black uppercase tracking-widest mb-8 flex items-center gap-3 text-black">
             <Plus size={16} className="text-purple-600" /> New Asset Deployment
@@ -224,7 +239,8 @@ export default function AdminDashboard() {
         </div>
 
         <div className="lg:col-span-2 space-y-12">
-          {/* INVENTORY SECTION */}
+          
+          {/* ACTIVE INVENTORY WITH CATEGORY SWITCHER */}
           <section className="space-y-6">
             <div className="flex justify-between items-center px-4">
               <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-3 text-black">
@@ -247,6 +263,8 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
+                      
+                      {/* THIS IS THE CATEGORY SWITCHER FOR EXISTING PRODUCTS */}
                       <select 
                         className="text-[8px] font-black text-purple-500 uppercase tracking-widest bg-transparent border-none outline-none cursor-pointer hover:text-purple-700 transition-colors"
                         value={product.category}
@@ -256,6 +274,7 @@ export default function AdminDashboard() {
                           <option key={opt.slug} value={opt.slug}>{opt.name.toUpperCase()}</option>
                         ))}
                       </select>
+
                       {updatingId === product.id && <Loader2 size={10} className="animate-spin text-purple-500" />}
                       {updatingId === product.id && <CheckCircle2 size={10} className="text-green-500 animate-pulse" />}
                     </div>
@@ -274,7 +293,7 @@ export default function AdminDashboard() {
             </div>
           </section>
 
-          {/* SYSTEM FEEDBACK SECTION */}
+          {/* SYSTEM FEEDBACK SECTION (REVIEWS) */}
           <section className="space-y-6">
             <div className="flex justify-between items-center px-4">
               <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-3 text-black">
@@ -303,13 +322,15 @@ export default function AdminDashboard() {
                         <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Verified Log: {new Date(review.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  {/* RED TRASH ICON FOR REVIEWS */}
+                  
+                  {/* RED REVIEW DELETE BUTTON */}
                   <button 
                     onClick={() => handleDeleteReview(review.id)}
-                    className="p-4 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all"
+                    className="p-4 bg-red-50 text-red-600 rounded-2xl hover:bg-red-600 hover:text-white transition-all shadow-sm"
                   >
                     <Trash2 size={20} />
                   </button>
+
                 </div>
               ))}
               {reviews.length === 0 && (
@@ -319,6 +340,7 @@ export default function AdminDashboard() {
               )}
             </div>
           </section>
+
         </div>
       </main>
     </div>
