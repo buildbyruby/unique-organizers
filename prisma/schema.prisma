@@ -29,8 +29,27 @@ model Product {
   images         String[]
   colors         String[]
   orderItems     OrderItem[]
+  reviews        Review[]    // Relation to public reviews
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      @default(5)
+  comment   String
+  userName  String   @default("Valued Client")
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 model Order {

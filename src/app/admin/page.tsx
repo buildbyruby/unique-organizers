@@ -1,9 +1,9 @@
 "use client"
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Package, Plus, ExternalLink, Trash2, Loader2, LayoutGrid, ImagePlus, ChevronDown } from 'lucide-react';
+import { Package, Plus, ExternalLink, Trash2, Loader2, LayoutGrid, ImagePlus, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { updateProductCategory } from '@/app/actions';
 
-// Premium Visual Color Presets
 const COLOR_PRESETS = [
   { label: 'Midnight', hex: '#000000' },
   { label: 'Crystal', hex: '#FFFFFF' },
@@ -12,8 +12,9 @@ const COLOR_PRESETS = [
   { label: 'Acrylic', hex: '#E0F2FE' }
 ];
 
-// SYNCHRONIZED SYSTEM CATEGORIES (Matches Homepage)
+// ADDED "LUXURY GIFTS" TO THE TOP OF THE LIST
 const CATEGORY_OPTIONS = [
+  { name: "Luxury Gifts", slug: "GIFTS" }, 
   { name: "Kitchen & Dining", slug: "KITCHEN" },
   { name: "Home & Living", slug: "HOME_LIVING" },
   { name: "Electronics", slug: "ELECTRONICS" },
@@ -35,6 +36,7 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [formLoading, setFormLoading] = useState(false);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   
   const [form, setForm] = useState({
     name: '', description: '', retailPrice: '', wholesalePrice: '', 
@@ -56,6 +58,15 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => { refreshData(); }, []);
+
+  const handleCategoryChange = async (productId: string, newCategory: string) => {
+    setUpdatingId(productId);
+    const result = await updateProductCategory(productId, newCategory);
+    if (result.success) {
+      setProducts(prev => prev.map(p => p.id === productId ? { ...p, category: newCategory } : p));
+    }
+    setTimeout(() => setUpdatingId(null), 1000);
+  };
 
   const openCloudinary = () => {
     // @ts-ignore
@@ -222,7 +233,19 @@ export default function AdminDashboard() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[8px] font-black text-purple-500 uppercase tracking-widest mb-1">{product.category.replace('_', ' ')}</div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <select 
+                      className="text-[8px] font-black text-purple-500 uppercase tracking-widest bg-transparent border-none outline-none cursor-pointer hover:text-purple-700 transition-colors"
+                      value={product.category}
+                      onChange={(e) => handleCategoryChange(product.id, e.target.value)}
+                    >
+                      {CATEGORY_OPTIONS.map(opt => (
+                        <option key={opt.slug} value={opt.slug}>{opt.name.toUpperCase()}</option>
+                      ))}
+                    </select>
+                    {updatingId === product.id && <Loader2 size={10} className="animate-spin text-purple-500" />}
+                    {updatingId === product.id && <CheckCircle2 size={10} className="text-green-500 animate-pulse" />}
+                  </div>
                   <h4 className="text-sm font-black text-black group-hover:text-purple-600 transition-colors uppercase tracking-tight truncate">{product.name}</h4>
                   <div className="flex items-center gap-4 mt-2">
                     <p className="text-[10px] font-bold text-slate-400">KSh {product.retailPrice.toLocaleString()}</p>

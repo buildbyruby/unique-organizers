@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { addProduct } from '@/app/actions'
-import { Plus, Loader2, CheckCircle2, AlertCircle, ArrowLeft, Image as ImageIcon } from 'lucide-react'
+import { Plus, Loader2, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AddProductPage() {
@@ -21,17 +21,20 @@ export default function AddProductPage() {
     setLoading(true)
     setMessage(null)
     
-    // We cast 'result' to 'any' here to stop the Vercel Type Error.
-    // This tells the compiler: "Trust me, I know there is a message here."
-    const result = await addProduct(formData) as any;
-
-    if (result.success) {
-      setMessage({ type: 'success', text: result.message })
-      window.scrollTo(0, 0)
-    } else {
-      setMessage({ type: 'error', text: result.message || "System error." })
+    try {
+      const result = await addProduct(formData);
+      if (result.success) {
+        setMessage({ type: 'success', text: "ASSET SUCCESSFULLY DEPLOYED TO NODE" })
+        setPreviews([])
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } else {
+        setMessage({ type: 'error', text: result.message || "SYSTEM AUTHENTICATION ERROR" })
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: "CRITICAL SYSTEM FAILURE DURING UPLOAD" })
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
@@ -77,11 +80,24 @@ export default function AddProductPage() {
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Classification</label>
-              <select name="category" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:border-purple-500 outline-none appearance-none">
+              {/* UPDATED DROPDOWN WITH GIFTS */}
+              <select name="category" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:border-purple-500 outline-none appearance-none cursor-pointer">
+                <option value="GIFTS">LUXURY GIFTS</option>
                 <option value="ELECTRONICS">ELECTRONICS</option>
-                <option value="CAR_EQUIPMENT">CAR_EQUIPMENT</option>
-                <option value="KITCHEN">KITCHEN</option>
-                <option value="FURNITURE">FURNITURE</option>
+                <option value="KITCHEN">KITCHEN & DINING</option>
+                <option value="HOME_LIVING">HOME & LIVING</option>
+                <option value="CLOTHING">CLOTHING & APPAREL</option>
+                <option value="BEAUTY">BEAUTY & PERSONAL CARE</option>
+                <option value="GROCERY">GROCERY & FOOD</option>
+                <option value="TOYS">TOYS & BABY</option>
+                <option value="SPORTS">SPORTS & OUTDOORS</option>
+                <option value="AUTOMOTIVE">AUTOMOTIVE ELITE</option>
+                <option value="PETS">PET SUPPLIES</option>
+                <option value="TOOLS">TOOLS & HARDWARE</option>
+                <option value="OFFICE">OFFICE SUPPLIES</option>
+                <option value="HEALTH">HEALTH & WELLNESS</option>
+                <option value="ENTERTAINMENT">ENTERTAINMENT</option>
+                <option value="GARDEN">GARDEN & OUTDOOR</option>
               </select>
             </div>
           </div>
@@ -93,7 +109,7 @@ export default function AddProductPage() {
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Stock_Quantity</label>
-              <input name="stock" type="number" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:border-purple-500 outline-none" />
+              <input name="stock" type="number" required defaultValue="20" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:border-purple-500 outline-none" />
             </div>
           </div>
 
@@ -106,8 +122,8 @@ export default function AddProductPage() {
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Color_Variants (Hex)</label>
             <div className="flex gap-2">
               <input name="colors" placeholder="#000000" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs" />
-              <input name="colors" placeholder="#7C3AED" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs" />
               <input name="colors" placeholder="#FFFFFF" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs" />
+              <input name="colors" placeholder="#F3F4F6" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs" />
             </div>
           </div>
 
