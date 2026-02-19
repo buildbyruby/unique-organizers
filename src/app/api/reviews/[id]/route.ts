@@ -12,7 +12,7 @@ export async function DELETE(
       where: { id },
     });
 
-    return NextResponse.json({ success: true, message: 'Review successfully purged' });
+    return NextResponse.json({ success: true, message: 'Review purged' });
   } catch (error) {
     console.error('Delete Error:', error);
     return NextResponse.json({ error: 'Failed to delete review' }, { status: 500 });
