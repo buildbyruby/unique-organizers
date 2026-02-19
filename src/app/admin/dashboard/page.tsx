@@ -15,6 +15,7 @@ const COLOR_PRESETS = [
 const CATEGORY_OPTIONS = [
   { name: "Kitchen & Dining", slug: "KITCHEN" },
   { name: "Home & Living", slug: "HOME_LIVING" },
+  { name: "Gifts & Occasions", slug: "GIFTS" }, // <--- RESTORED THIS
   { name: "Electronics", slug: "ELECTRONICS" },
   { name: "Clothing & Apparel", slug: "CLOTHING" },
   { name: "Beauty & Personal Care", slug: "BEAUTY" },
