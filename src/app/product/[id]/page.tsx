@@ -47,6 +47,10 @@ export default function ProductPage() {
     </div>
   );
 
+  const productImages = Array.isArray(product.images) && product.images.length > 0
+    ? product.images
+    : ['/placeholder-product.jpg'];
+  const safeActiveImage = Math.min(activeImage, productImages.length - 1);
   const activePrice = pricingTier === 'retail' ? product.retailPrice : product.wholesalePrice;
   const liveTotal = activePrice * quantity;
 
@@ -60,14 +64,14 @@ export default function ProductPage() {
             className="aspect-square bg-white rounded-[2.5rem] overflow-hidden border-2 relative group shadow-xl transition-all duration-500"
             style={{ borderColor: selectedColor ? selectedColor : '#f1f5f9' }}
           >
-            <img src={product.images[activeImage]} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            <img src={productImages[safeActiveImage]} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
             <div className="absolute top-6 left-6 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-100 text-slate-500 z-10 shadow-sm">
               {product.category.replace('_', ' ')}
             </div>
           </div>
           
           <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
-            {product.images.map((img: string, idx: number) => (
+            {productImages.map((img: string, idx: number) => (
               <button 
                 key={idx} onClick={() => setActiveImage(idx)}
                 className={`w-20 h-20 rounded-2xl overflow-hidden border-2 flex-shrink-0 transition-all ${activeImage === idx ? 'border-purple-600 scale-95 shadow-md' : 'border-transparent opacity-50 hover:opacity-100'}`}

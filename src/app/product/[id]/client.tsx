@@ -83,7 +83,7 @@ export default function ProductClient({ product }: { product: any }) {
         <div className="space-y-6">
           <div className="aspect-square bg-[#111] rounded-[3rem] overflow-hidden relative border border-white/5 group">
              <img 
-               src={product.images[0]} 
+               src={product.images?.[0] || "/placeholder-product.jpg"} 
                alt={product.name}
                className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
              />

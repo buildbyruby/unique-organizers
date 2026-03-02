@@ -58,9 +58,14 @@ export async function addProduct(formData: FormData): Promise<ActionResponse> {
         method: "POST",
         body: fData,
       });
+      if (!res.ok) {
+        throw new Error("CLOUDINARY_UPLOAD_FAILED");
+      }
       const data = await res.json();
-      return data.secure_url;
+      return data.secure_url || data.url || "";
     }));
+
+    const sanitizedImageUrls = imageUrls.filter((url): url is string => typeof url === "string" && url.length > 0);
 
     await prisma.product.create({
       data: {
@@ -71,7 +76,7 @@ export async function addProduct(formData: FormData): Promise<ActionResponse> {
         wholesalePrice: parseFloat(formData.get("wholesalePrice") as string) || 0,
         stock: parseInt(formData.get("stock") as string) || 0,
         colors: formData.getAll("colors") as string[],
-        images: imageUrls,
+        images: sanitizedImageUrls,
       }
     });
 
