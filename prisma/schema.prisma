@@ -1,78 +1,140 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
+  
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String   @default("")
-  role      String   @default("CUSTOMER")
-  orders    Order[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String      @id @default(cuid())
+  email            String      @unique
+  name             String?
+  password         String      @default("")
+  role             String      @default("CUSTOMER") // CUSTOMER, ADMIN, DELIVERY
+  orders           Order[]     @relation("CustomerOrders")
+  deliveries       Order[]     @relation("DeliveryAssignments")
+  wishlist         Wishlist[]
+  cart             CartItem[]
+  messagesSent     Message[]   @relation("SentMessages")
+  messagesReceived Message[]   @relation("ReceivedMessages")
+  analytics        Analytics[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 }
 
 model Product {
-  id             String      @id @default(cuid())
-  name           String
-  description    String
-  retailPrice    Float
-  wholesalePrice Float
-  stock          Int         @default(0)
-  minWholesale   Int         @default(1)
-  category       String
-  images         String[]
-  colors         String[]
-  orderItems     OrderItem[]
-  reviews        Review[]    // Relation to public reviews
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-}
-
-model Feedback {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  message   String
-  createdAt DateTime @default(now())
-}
-
-model Review {
-  id        String   @id @default(cuid())
-  rating    Int      @default(5)
-  comment   String
-  userName  String   @default("Valued Client")
-  productId String?
-  product   Product? @relation(fields: [productId], references: [id])
-  createdAt DateTime @default(now())
+  id                  String      @id @default(cuid())
+  name                String
+  description         String
+  categoryDescription String?
+  retailPrice         Float
+  wholesalePrice      Float
+  discountPrice       Float?
+  isDiscounted        Boolean     @default(false)
+  stock               Int         @default(0)
+  minWholesale        Int         @default(1)
+  
+  // CATEGORIZATION & STOCK CONTROL
+  category            String
+  subCategory         String?
+  isStockOpen         Boolean     @default(true) 
+  
+  images              String[]
+  videos              String[]    
+  colors              String[]
+  sizes               String[]    
+  gender              String?
+  orderItems          OrderItem[]
+  wishlistedBy        Wishlist[]
+  cartItems           CartItem[]
+  reviews             Review[]    
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 }
 
 model Order {
   id               String      @id @default(cuid())
   userId           String?
-  user             User?       @relation(fields: [userId], references: [id])
+  user             User?       @relation("CustomerOrders", fields: [userId], references: [id])
   items            OrderItem[]
   status           OrderStatus @default(PENDING)
-  accountReference String      @default("N/A")
-  phoneNumber      String?
+  
+  // DELIVERY TRACKING
+  deliveryStatus   DeliveryStatus @default(PENDING) 
+  assignedToId     String? 
+  assignedTo       User?       @relation("DeliveryAssignments", fields: [assignedToId], references: [id])
+  uniqueOrderLink  String      @unique @default(cuid()) 
+  trackingTimeline Json? 
+  
+  // FEEDBACK SYSTEM
+  feedbackCompleted Boolean    @default(false)
+  
   totalAmount      Float       @default(0)
   paymentStatus    String      @default("PENDING")
+  phoneNumber      String?
+  accountReference String      @default("N/A")
+  deliveryFee      Float       @default(0)
+  reviews          Review[]    
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 }
 
 enum OrderStatus {
   PENDING
-  SUCCESS
-  FAILED
+  CONFIRMED
   SHIPPED
   DELIVERED
-  PROCESSING
+  CANCELLED
+}
+
+enum DeliveryStatus {
+  PENDING
+  ASSIGNED
+  DISPATCHED
+  IN_TRANSIT
+  DELIVERED
+}
+
+model Review { 
+  id          String   @id @default(cuid())
+  rating      Int      @default(5)
+  comment     String
+  userName    String   @default("Valued Client")
+  reviewImage String? 
+  isApproved  Boolean  @default(false)
+  
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
+  
+  orderId     String?
+  order       Order?   @relation(fields: [orderId], references: [id])
+  
+  createdAt   DateTime @default(now())
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, productId])
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  color     String?
+  size      String?
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
 }
 
 model OrderItem {
@@ -80,8 +142,53 @@ model OrderItem {
   orderId   String
   productId String
   quantity  Int
-  price     Float   @default(0)
+  price     Float
   color     String?
+  size      String?
   order     Order   @relation(fields: [orderId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
+}
+
+model Advert {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  imageUrl     String   @default("https://placehold.co/600x400")
+  link         String?
+  type         String   @default("HERO") 
+  priority     Int      @default(0)
+  duration     Int      
+  impressions  Int      @default(0)
+  clicks       Int      @default(0)
+  conversions  Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+model Analytics { 
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  eventType  String   
+  productId  String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+}
+
+model Message { 
+  id          String   @id @default(cuid())
+  content     String
+  senderId    String
+  receiverId  String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Feedback { 
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
 }

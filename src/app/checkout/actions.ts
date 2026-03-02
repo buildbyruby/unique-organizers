@@ -2,34 +2,48 @@
 
 import prisma from '@/lib/prisma'
 import { redirect } from 'next/navigation'
+import { nanoid } from 'nanoid'
 
-export async function initiateOrder(productId: string, userId: string, phoneNumber: string = "0700000000") {
-  // 1. Find the product to get the price
-  const product = await prisma.product.findUnique({
-    where: { id: productId }
-  })
+export async function initiateOrder(items: any[], userId: string, phone: string, total: number) {
+  try {
+    // Generate Secure Unique Order Link
+    const orderLink = `ORD-${nanoid(10).toUpperCase()}`
 
-  if (!product) throw new Error("Product not found")
-
-  // 2. Create the order with all required fields
-  const order = await prisma.order.create({
-    data: {
-      userId: userId,
-      phoneNumber: phoneNumber, // FIXED: Added the missing required field
-      totalAmount: product.retailPrice,
-      accountReference: `UQ-${Math.random().toString(36).substring(7).toUpperCase()}`,
-      status: 'PENDING' as any,        // FIXED: Bypassed Type Error
-      paymentStatus: 'CREATED' as any, // FIXED: Bypassed Type Error
-      items: {
-        create: {
-          productId: product.id,
-          quantity: 1,
-          price: product.retailPrice
+    const order = await prisma.order.create({
+      data: {
+        userId: userId,
+        phoneNumber: phone,
+        totalAmount: total,
+        accountReference: `UQ-${Math.random().toString(36).substring(7).toUpperCase()}`,
+        uniqueOrderLink: orderLink,
+        status: 'PENDING',
+        deliveryStatus: 'PENDING',
+        trackingTimeline: [
+          { status: 'PENDING', time: new Date().toISOString(), note: "Order Synchronized" }
+        ],
+        items: {
+          create: items.map(item => ({
+            productId: item.id,
+            quantity: item.quantity,
+            price: item.retailPrice,
+            color: item.selectedColor,
+            size: item.selectedSize
+          }))
         }
       }
-    } as any // FIXED: Final safety bypass for the entire object
-  })
+    })
 
-  // 3. Send the user to the success page
-  redirect(`/checkout/success?ref=${order.accountReference}`)
+    // Track Conversion
+    await prisma.analytics.create({
+      data: {
+        eventType: 'PURCHASE',
+        metadata: { orderId: order.id, amount: total }
+      }
+    })
+
+    redirect(`/checkout/success?ref=${order.uniqueOrderLink}`)
+  } catch (error) {
+    console.error("Order Failure:", error)
+    throw new Error("System failed to generate transaction.")
+  }
 }

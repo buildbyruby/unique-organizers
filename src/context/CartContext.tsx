@@ -2,87 +2,154 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 
 type CartItem = {
-  id: string;
+  id: string; // Composite ID: productId-color-tier-size
+  productId: string;
   name: string;
   price: number;
   quantity: number;
   color?: string;
+  size?: string;
   image: string;
   pricingTier: 'retail' | 'wholesale';
 }
 
-const CartContext = createContext<any>(null);
+interface CartContextType {
+  cart: CartItem[];
+  addToCart: (product: any, color: string, quantity: number, pricingTier: 'retail' | 'wholesale', size?: string) => void;
+  removeFromCart: (id: string) => void;
+  updateQuantity: (id: string, delta: number) => void;
+  clearCart: () => void;
+  checkout: () => void;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+  cartCount: number;
+  cartTotal: number;
+}
+
+const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
+  // Persistence: Load cart from LocalStorage
   useEffect(() => {
-    const saved = localStorage.getItem('unique-cart');
-    if (saved) setCart(JSON.parse(saved));
+    const saved = localStorage.getItem('unique-cart-v2');
+    if (saved) {
+      try {
+        setCart(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse cart storage", e);
+      }
+    }
   }, []);
 
+  // Persistence: Save cart to LocalStorage
   useEffect(() => {
-    localStorage.setItem('unique-cart', JSON.stringify(cart));
+    localStorage.setItem('unique-cart-v2', JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product: any, color: string, quantity: number, pricingTier: 'retail' | 'wholesale') => {
+  const addToCart = (
+    product: any, 
+    color: string, 
+    quantity: number, 
+    pricingTier: 'retail' | 'wholesale',
+    size?: string
+  ) => {
     const activePrice = pricingTier === 'wholesale' ? product.wholesalePrice : product.retailPrice;
 
     setCart(prev => {
-      const existing = prev.find(item => item.id === product.id && item.color === color && item.pricingTier === pricingTier);
+      // Composite key ensures unique variants (different colors/sizes) are distinct items
+      const compositeId = `${product.id}-${color}-${pricingTier}-${size || 'none'}`;
       
-      if (existing) {
-        return prev.map(item => 
-          (item.id === product.id && item.color === color && item.pricingTier === pricingTier) 
-            ? { ...item, quantity: item.quantity + quantity } 
-            : item
-        );
+      const existingIndex = prev.findIndex(item => item.id === compositeId);
+      
+      if (existingIndex > -1) {
+        const updatedCart = [...prev];
+        updatedCart[existingIndex].quantity += quantity;
+        return updatedCart;
       }
+
       return [...prev, { 
-        id: product.id, 
+        id: compositeId,
+        productId: product.id,
         name: product.name, 
         price: activePrice, 
         quantity: quantity, 
-        color: color, 
+        color: color || 'Standard', 
+        size: size || 'N/A',
         image: product.images[0],
         pricingTier: pricingTier
       }];
     });
     
-    // MOVE THIS HERE: Always open the sidebar when adding
+    // Open drawer to show success, but do not redirect
     setIsOpen(true); 
   };
 
-  const removeFromCart = (id: string, color: string, pricingTier: string) => {
-    setCart(prev => prev.filter(item => !(item.id === id && item.color === color && item.pricingTier === pricingTier)));
+  const removeFromCart = (id: string) => {
+    setCart(prev => prev.filter(item => item.id !== id));
   };
 
-  const checkout = () => {
-    const phone = "254797517565"; 
-    let message = `*NEW SYSTEM ORDER* 📦%0A%0A`;
-    let total = 0;
+  const updateQuantity = (id: string, delta: number) => {
+    setCart(prev => prev.map(item => {
+      if (item.id === id) {
+        const newQty = Math.max(1, item.quantity + delta);
+        return { ...item, quantity: newQty };
+      }
+      return item;
+    }));
+  };
 
-    cart.forEach(item => {
+  const clearCart = () => setCart([]);
+
+  const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+  const checkout = () => {
+    if (cart.length === 0) return;
+
+    const phone = "254797517565"; 
+    let message = `*NEW ORDER FROM UNIQUE ORGANIZERS* 📦%0A`;
+    message += `--------------------------------%0A%0A`;
+
+    cart.forEach((item, index) => {
       const lineTotal = item.price * item.quantity;
-      total += lineTotal;
-      message += `▫️ ${item.quantity}x *${item.name}*%0A`;
-      message += `   Type: ${item.pricingTier.toUpperCase()}%0A`;
-      if(item.color) message += `   Variant: ${item.color}%0A`;
-      message += `   Subtotal: KSh ${lineTotal.toLocaleString()}%0A%0A`;
+      message += `*${index + 1}. ${item.name.toUpperCase()}*%0A`;
+      message += `   Attributes: ${item.color}${item.size !== 'N/A' ? ` | Size: ${item.size}` : ''}%0A`;
+      message += `   Pricing: ${item.pricingTier.toUpperCase()}%0A`;
+      message += `   Qty: ${item.quantity} x KSh ${item.price.toLocaleString()}%0A`;
+      message += `   Subtotal: *KSh ${lineTotal.toLocaleString()}*%0A%0A`;
     });
 
-    message += `💰 *GRAND TOTAL: KSh ${total.toLocaleString()}*%0A%0A`;
-    message += `_Please confirm inventory availability._`;
+    message += `--------------------------------%0A`;
+    message += `💰 *GRAND TOTAL: KSh ${cartTotal.toLocaleString()}*%0A`;
+    message += `--------------------------------%0A%0A`;
+    message += `_Please confirm availability for delivery._`;
 
     window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
   };
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, checkout, isOpen, setIsOpen }}>
+    <CartContext.Provider value={{ 
+      cart, 
+      addToCart, 
+      removeFromCart, 
+      updateQuantity,
+      clearCart,
+      checkout, 
+      isOpen, 
+      setIsOpen,
+      cartCount,
+      cartTotal
+    }}>
       {children}
     </CartContext.Provider>
   );
 }
 
-export const useCart = () => useContext(CartContext);
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) throw new Error("useCart must be used within a CartProvider");
+  return context;
+};

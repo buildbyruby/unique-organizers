@@ -1,23 +1,45 @@
 "use client"
-
 import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useParams, useRouter } from 'next/navigation';
-import { Star, ShoppingBag, Check, ChevronLeft, Loader2, Minus, Plus, Info } from 'lucide-react';
+import { 
+  ShoppingBag, ChevronLeft, Loader2, Minus, Plus, 
+  Heart, Tag, Landmark, MessageCircle, Star, ShieldCheck
+} from 'lucide-react';
+import { trackEngagement, toggleWishlist } from '@/app/actions';
+import { processCheckoutAndWhatsApp } from '../whatsapp-action';
 
 export default function ProductPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id as string;
   const router = useRouter();
   const { addToCart } = useCart();
-  const [product, setProduct] = useState<any>(null);
   
-  // Interactive States
+  const [product, setProduct] = useState<any>(null);
   const [selectedColor, setSelectedColor] = useState<string>('');
-  const [pricingTier, setPricingTier] = useState<'retail' | 'wholesale'>('retail');
+  const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
-  const [activeImage, setActiveImage] = useState(0);
+  const [activeMedia, setActiveMedia] = useState<{type: 'image' | 'video', url: string} | null>(null);
+  const [syncing, setSyncing] = useState<'cart' | 'wishlist' | 'whatsapp' | null>(null);
+
+  // Robust resolver for multi-format image data
+  const resolveImages = (data: any): string[] => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (typeof data === 'string') {
+      if (data.startsWith('[')) {
+        try { 
+          const parsed = JSON.parse(data);
+          return Array.isArray(parsed) ? parsed : [data];
+        } catch { return [data]; }
+      }
+      return data.split(',').map(s => s.trim()).filter(s => s !== "");
+    }
+    return [];
+  };
 
   useEffect(() => {
+    if (!id) return;
     fetch(`/api/products`)
       .then(res => res.json())
       .then(data => {
@@ -25,160 +47,221 @@ export default function ProductPage() {
         if (found) {
           setProduct(found);
           if (found.colors?.length > 0) setSelectedColor(found.colors[0]);
+          if (found.sizes?.length > 0) setSelectedSize(found.sizes[0]);
+          
+          const images = resolveImages(found.images);
+          // High-quality fallback if Cloudinary URL is missing
+          const initialUrl = images[0] || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000';
+          setActiveMedia({ type: 'image', url: initialUrl });
+          trackEngagement(found.id, 'VISIT');
         }
       });
   }, [id]);
 
-  // Enforce Wholesale Minimums dynamically
-  useEffect(() => {
-    if (product) {
-      if (pricingTier === 'wholesale' && quantity < product.minWholesale) {
-        setQuantity(product.minWholesale);
-      } else if (pricingTier === 'retail' && quantity < 1) {
-        setQuantity(1);
-      }
-    }
-  }, [pricingTier, product, quantity]);
-
   if (!product) return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center text-black gap-4">
       <Loader2 className="animate-spin text-purple-600" size={32} />
-      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Retrieving Asset...</p>
+      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Synchronizing_Asset_Data...</p>
     </div>
   );
 
-  const activePrice = pricingTier === 'retail' ? product.retailPrice : product.wholesalePrice;
-  const liveTotal = activePrice * quantity;
+  const images = resolveImages(product.images);
+  const isWholesaleEligible = quantity >= (product.minWholesale || 5);
+  let unitPrice = product.retailPrice;
+  if (isWholesaleEligible && product.wholesalePrice > 0) {
+    unitPrice = product.wholesalePrice;
+  } else if (product.isDiscounted && product.discountPrice) {
+    unitPrice = product.discountPrice;
+  }
+
+  const liveTotal = unitPrice * quantity;
+
+  const handleWhatsAppOrder = async () => {
+    setSyncing('whatsapp');
+    const result = await processCheckoutAndWhatsApp({
+      productId: product.id,
+      productName: product.name,
+      price: unitPrice,
+      color: selectedColor,
+      size: selectedSize,
+      quantity: quantity,
+      phone: "", 
+      origin: window.location.origin
+    });
+
+    if (result.success && result.url) {
+      window.location.href = result.url;
+    } else {
+      alert("Checkout synchronization failed.");
+    }
+    setSyncing(null);
+  };
+
+  const handleDeployToCart = async () => {
+    setSyncing('cart');
+    try {
+      await addToCart(
+        {...product, retailPrice: unitPrice}, 
+        selectedColor, 
+        quantity, 
+        isWholesaleEligible ? 'wholesale' : 'retail',
+        selectedSize
+      );
+      router.push('/dashboard');
+    } catch (err) {
+      alert("Cart Sync Error.");
+    } finally {
+      setSyncing(null);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pt-10 pb-20 px-6">
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-start">
+    <div className="min-h-screen bg-slate-50 text-slate-900 pt-16 pb-24 px-8 md:px-12 font-sans">
+      {/* EXPANDED LAYOUT: increased max-width and gaps to fix "squeezed" UI */}
+      <div className="max-w-[1440px] mx-auto grid lg:grid-cols-2 gap-20 xl:gap-28 items-start">
         
-        {/* LEFT: DYNAMIC IMAGE GALLERY */}
-        <div className="space-y-4 md:sticky md:top-28">
-          <div 
-            className="aspect-square bg-white rounded-[2.5rem] overflow-hidden border-2 relative group shadow-xl transition-all duration-500"
-            style={{ borderColor: selectedColor ? selectedColor : '#f1f5f9' }}
-          >
-            <img src={product.images[activeImage]} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-            <div className="absolute top-6 left-6 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-100 text-slate-500 z-10 shadow-sm">
-              {product.category.replace('_', ' ')}
+        {/* MEDIA DISPLAY */}
+        <div className="space-y-8 lg:sticky lg:top-28">
+          <div className="aspect-square bg-white rounded-[4rem] overflow-hidden border border-slate-100 relative shadow-2xl group transition-all duration-500 hover:shadow-purple-200/50">
+            <div className="absolute top-10 left-10 z-10 flex flex-col gap-4">
+              {product.isDiscounted && !isWholesaleEligible && (
+                <div className="bg-red-600 text-white px-6 py-3 rounded-2xl font-black text-[11px] uppercase tracking-[0.25em] shadow-lg">
+                  Flash Sale
+                </div>
+              )}
+              {isWholesaleEligible && (
+                <div className="bg-purple-600 text-white px-6 py-3 rounded-2xl font-black text-[11px] uppercase tracking-[0.25em] shadow-lg animate-pulse">
+                  Wholesale Active
+                </div>
+              )}
             </div>
+            
+            <img 
+              src={activeMedia?.url} 
+              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
+              alt={product.name} 
+              onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560393464-5c69a73c5770?q=80&w=1000' }}
+            />
           </div>
-          
-          <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
-            {product.images.map((img: string, idx: number) => (
+
+          <div className="flex gap-5 overflow-x-auto pb-6 no-scrollbar">
+            {images.map((img: string, idx: number) => (
               <button 
-                key={idx} onClick={() => setActiveImage(idx)}
-                className={`w-20 h-20 rounded-2xl overflow-hidden border-2 flex-shrink-0 transition-all ${activeImage === idx ? 'border-purple-600 scale-95 shadow-md' : 'border-transparent opacity-50 hover:opacity-100'}`}
+                key={idx} 
+                onClick={() => setActiveMedia({type: 'image', url: img})}
+                className={`w-28 h-28 flex-shrink-0 rounded-[2rem] overflow-hidden border-2 transition-all ${activeMedia?.url === img ? 'border-purple-600 scale-90 ring-4 ring-purple-50' : 'border-white opacity-50 hover:opacity-100 hover:scale-105'}`}
               >
-                <img src={img} className="w-full h-full object-cover" />
+                <img src={img} className="w-full h-full object-cover" alt="Gallery Item" />
               </button>
             ))}
           </div>
         </div>
 
-        {/* RIGHT: COMMERCE CONTROLS */}
-        <div className="space-y-8 pt-4">
-          <div>
-            <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-400 hover:text-black mb-6 text-xs font-black uppercase tracking-widest transition-colors">
-              <ChevronLeft size={14} /> Back to Archive
+        {/* CONTENT & CONFIGURATION */}
+        <div className="space-y-12 pt-6">
+          <div className="space-y-6">
+            <button onClick={() => router.back()} className="inline-flex items-center gap-3 text-slate-400 hover:text-purple-600 transition-colors text-[10px] font-black uppercase tracking-widest group">
+              <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> Return_to_Inventory
             </button>
-            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-tight mb-4 italic text-black">{product.name}</h1>
-            <div className="flex items-center gap-4 text-purple-600">
-              <div className="flex text-amber-400">
-                <Star fill="currentColor" size={14} />
-                <Star fill="currentColor" size={14} />
-                <Star fill="currentColor" size={14} />
-                <Star fill="currentColor" size={14} />
-                <Star fill="currentColor" size={14} />
-              </div>
-              <span className="text-[10px] font-black tracking-[0.2em] opacity-40 uppercase">Verified System Stock</span>
+            <h1 className="text-6xl md:text-7xl font-black uppercase tracking-tighter italic text-black leading-[0.9]">{product.name}</h1>
+            <div className="flex items-center gap-5 text-purple-600">
+               <div className="flex gap-1">
+                  {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
+               </div>
+               <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Verified_System_Asset</span>
             </div>
           </div>
 
-          <p className="text-lg text-slate-500 leading-relaxed font-medium">
-            {product.description}
-          </p>
+          <p className="text-2xl text-slate-500 leading-relaxed font-medium max-w-2xl">{product.description}</p>
 
-          <div className="p-8 rounded-[2.5rem] bg-white border border-slate-200 shadow-sm space-y-8">
-            
-            {/* TIER SELECTION */}
-            <div className="flex p-1.5 bg-slate-100 rounded-2xl w-fit border border-slate-200">
-              <button 
-                onClick={() => setPricingTier('retail')}
-                className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${pricingTier === 'retail' ? 'bg-white text-black shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                Retail
-              </button>
-              <button 
-                onClick={() => setPricingTier('wholesale')}
-                className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${pricingTier === 'wholesale' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                Wholesale
-              </button>
+          <div className="p-12 md:p-16 rounded-[4rem] bg-white border border-slate-100 shadow-2xl shadow-slate-200/60 space-y-12">
+            <div className="flex items-baseline gap-6">
+              <div className={`text-7xl font-black italic tracking-tighter ${isWholesaleEligible ? 'text-purple-600' : 'text-black'}`}>
+                KSh {unitPrice?.toLocaleString()}
+              </div>
+              {product.isDiscounted && !isWholesaleEligible && (
+                <span className="text-2xl text-slate-200 line-through font-bold italic">KSh {product.retailPrice?.toLocaleString()}</span>
+              )}
             </div>
 
-            {/* COLOR PRESETS */}
-            {product.colors && product.colors.length > 0 && (
-              <div className="space-y-4">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Asset Variant</span>
-                <div className="flex gap-4">
-                  {product.colors.map((color: string) => (
-                    <button
-                      key={color} onClick={() => setSelectedColor(color)}
-                      className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all ${selectedColor === color ? 'border-purple-600 scale-110 shadow-lg' : 'border-slate-100 hover:border-slate-300'}`}
-                      style={{ backgroundColor: color }}
-                    >
-                      {selectedColor === color && (
-                        <Check size={20} className={color.toLowerCase() === '#ffffff' || color.toLowerCase() === 'white' ? 'text-black' : 'text-white'} />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* QUANTITY & TOTAL */}
-            <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
-              
-              <div className="space-y-3">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Quantity</span>
-                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-2xl p-1">
-                  <button 
-                    onClick={() => setQuantity(Math.max(pricingTier === 'wholesale' ? product.minWholesale : 1, quantity - 1))}
-                    className="w-12 h-12 flex items-center justify-center hover:bg-white rounded-xl transition-all text-slate-400 hover:text-black"
-                  >
-                    <Minus size={16} />
-                  </button>
-                  <span className="w-16 text-center font-black text-xl text-black">{quantity}</span>
-                  <button 
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="w-12 h-12 flex items-center justify-center hover:bg-white rounded-xl transition-all text-slate-400 hover:text-black"
-                  >
-                    <Plus size={16} />
-                  </button>
-                </div>
-                {pricingTier === 'wholesale' && (
-                  <div className="text-purple-600 text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
-                    <Info size={12}/> Min Order: {product.minWholesale}
+            <div className="grid sm:grid-cols-2 gap-12">
+              {product.sizes?.length > 0 && (
+                <div className="space-y-5">
+                  <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Size_Matrix</span>
+                  <div className="flex flex-wrap gap-3">
+                    {product.sizes.map((size: string) => (
+                      <button key={size} onClick={() => setSelectedSize(size)}
+                        className={`px-8 py-5 rounded-2xl text-[11px] font-black transition-all uppercase tracking-widest ${selectedSize === size ? 'bg-black text-white shadow-xl scale-105' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
+                        {size}
+                      </button>
+                    ))}
                   </div>
-                )}
-              </div>
-
-              <div className="text-right">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Live Total</span>
-                <div className="text-4xl font-black text-black tracking-tighter italic">KSh {liveTotal.toLocaleString()}</div>
-              </div>
+                </div>
+              )}
+              {product.colors?.length > 0 && (
+                <div className="space-y-5">
+                  <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Color_Node</span>
+                  <div className="flex flex-wrap gap-4">
+                    {product.colors.map((color: string) => (
+                      <button key={color} onClick={() => setSelectedColor(color)}
+                        className={`w-14 h-14 rounded-full border-4 transition-all ${selectedColor === color ? 'border-purple-600 scale-125 shadow-2xl z-10' : 'border-white bg-slate-100'}`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* ACTION */}
-            <button 
-              onClick={() => addToCart(product, selectedColor, quantity, pricingTier)}
-              className="w-full bg-black text-white h-16 rounded-2xl font-black uppercase tracking-widest hover:bg-purple-600 transition-all flex items-center justify-center gap-3 active:scale-95 shadow-xl shadow-black/10"
-            >
-              <ShoppingBag size={20} /> Initialize Acquisition
-            </button>
+            <div className="pt-12 border-t border-slate-50 space-y-8">
+              <div className="flex items-center justify-between bg-slate-50 p-8 rounded-[2.5rem]">
+                <div className="flex items-center gap-8">
+                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-sm active:scale-90"><Minus size={22}/></button>
+                  <span className="font-black text-3xl w-10 text-center">{quantity}</span>
+                  <button onClick={() => setQuantity(quantity + 1)} className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-sm active:scale-90"><Plus size={22}/></button>
+                </div>
+                <div className="text-right">
+                  <span className="text-[11px] font-black uppercase text-slate-400 block tracking-widest mb-2">Grand_Total</span>
+                  <span className={`text-3xl font-black italic ${isWholesaleEligible ? 'text-purple-600' : ''}`}>KSh {liveTotal.toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="grid gap-5">
+                <button 
+                  onClick={handleWhatsAppOrder}
+                  disabled={syncing !== null}
+                  className="h-28 bg-[#25D366] text-white rounded-[2.5rem] font-black uppercase tracking-[0.25em] hover:bg-green-600 transition-all flex items-center justify-center gap-5 shadow-xl shadow-green-200 disabled:opacity-50 italic text-lg"
+                >
+                  {syncing === 'whatsapp' ? <Loader2 className="animate-spin" /> : <MessageCircle size={28} strokeWidth={3} />}
+                  Direct_Deployment_to_WhatsApp
+                </button>
+
+                <div className="grid grid-cols-2 gap-5">
+                  <button 
+                    onClick={handleDeployToCart}
+                    disabled={syncing !== null}
+                    className="h-24 bg-black text-white rounded-[2.5rem] font-black text-[11px] uppercase tracking-[0.25em] hover:bg-purple-600 transition-all flex items-center justify-center gap-4 italic shadow-lg"
+                  >
+                    <ShoppingBag size={22} /> Push_to_Cart
+                  </button>
+                  <button 
+                    onClick={() => toggleWishlist(product.id)}
+                    className="h-24 bg-white text-slate-900 border border-slate-100 rounded-[2.5rem] font-black text-[11px] uppercase tracking-[0.25em] hover:bg-red-50 hover:text-red-600 transition-all flex items-center justify-center gap-4 italic shadow-lg"
+                  >
+                    <Heart size={22} /> Save_Asset
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-center gap-12 pt-6">
+               <div className="flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  <ShieldCheck size={18} className="text-purple-600" /> Secure_Protocol
+               </div>
+               <div className="flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  <Landmark size={18} className="text-purple-600" /> Pay_on_Node
+               </div>
+            </div>
           </div>
         </div>
       </div>

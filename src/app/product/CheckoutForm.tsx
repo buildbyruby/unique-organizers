@@ -1,22 +1,51 @@
 "use client"
 
 import { useState } from 'react'
+import { useCart } from '@/context/CartContext'
 
 export default function CheckoutForm({ amount, productName }: { amount: number, productName: string }) {
   const [phone, setPhone] = useState('')
   const [isRedirecting, setIsRedirecting] = useState(false)
+  
+  // System Upgrade: Bridge the legacy checkout form to the new Cart Context
+  const { cart, cartTotal } = useCart()
 
   const handleWhatsAppOrder = () => {
     if (!phone || phone.length < 10) return alert("Please enter a valid phone number")
     
     setIsRedirecting(true)
     
-    // Using your official Support Line
     const myNumber = "254797517565" 
-    const message = `Hello Unique Organizers! I'd like to order: ${productName}. My phone number is ${phone}. Total: KSh ${amount.toLocaleString()}`
+    let message = ''
+
+    // MULTI-ITEM CHECKOUT LOGIC: Triggered if cart is populated
+    if (cart && cart.length > 0) {
+      message = `*NEW SYSTEM ORDER* 📦\n`
+      message += `--------------------------------\n\n`
+
+      cart.forEach((item: any, index: number) => {
+        const lineTotal = item.price * item.quantity
+        message += `*${index + 1}. ${item.name.toUpperCase()}*\n`
+        
+        // Accurate string injection for variants
+        message += `   Attributes: ${item.color}${item.size && item.size !== 'N/A' ? ` | Size: ${item.size}` : ''}\n`
+        message += `   Pricing: ${item.pricingTier.toUpperCase()}\n`
+        message += `   Qty: ${item.quantity} x KSh ${item.price.toLocaleString()}\n`
+        message += `   Subtotal: *KSh ${lineTotal.toLocaleString()}*\n\n`
+      })
+
+      message += `--------------------------------\n`
+      message += `💰 *GRAND TOTAL: KSh ${cartTotal.toLocaleString()}*\n`
+      message += `--------------------------------\n\n`
+      message += `*Customer Contact:* ${phone}\n`
+      message += `_Please confirm availability for delivery._`
+    } else {
+      // LEGACY FALLBACK: Preserves routing logic if someone accesses a direct Buy Now link without a cart
+      message = `Hello Unique Organizers! I'd like to order: ${productName}. My phone number is ${phone}. Total: KSh ${amount.toLocaleString()}`
+    }
+
+    // Direct encoding ensures no spaces or line breaks are lost in transit
     const encodedMessage = encodeURIComponent(message)
-    
-    // Open WhatsApp directly
     window.open(`https://wa.me/${myNumber}?text=${encodedMessage}`, '_blank')
     
     setTimeout(() => setIsRedirecting(false), 2000)
@@ -25,9 +54,11 @@ export default function CheckoutForm({ amount, productName }: { amount: number, 
   return (
     <div className="p-8 bg-white rounded-[2.5rem] border border-pink-100 shadow-2xl max-w-md mx-auto">
       <p className="text-[10px] font-black text-pink-500 uppercase tracking-[0.3em] mb-2 text-center">
-        Instant Order
+        {cart && cart.length > 0 ? 'Multi-Item Order' : 'Instant Order'}
       </p>
-      <h2 className="text-center text-gray-900 font-bold mb-6 italic">{productName}</h2>
+      <h2 className="text-center text-gray-900 font-bold mb-6 italic">
+        {cart && cart.length > 0 ? `Cart Total: KSh ${cartTotal.toLocaleString()}` : productName}
+      </h2>
       
       <div className="space-y-4">
         <div>

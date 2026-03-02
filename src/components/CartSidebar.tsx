@@ -1,10 +1,11 @@
 "use client"
-import { useCart } from "@/context/CartContext"; // Adjust path as needed
-import { X, Trash2, ShoppingBag, MessageCircle } from "lucide-react";
+import { useCart } from "@/context/CartContext";
+import { X, Trash2, ShoppingBag, MessageCircle, Landmark, Tag } from "lucide-react";
 
 export default function CartSidebar() {
   const { cart, isOpen, setIsOpen, removeFromCart, checkout } = useCart();
 
+  // Calculate total based on dynamic item prices
   const total = cart.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
 
   if (!isOpen) return null;
@@ -40,22 +41,45 @@ export default function CartSidebar() {
             </div>
           ) : (
             cart.map((item: any) => (
-              <div key={`${item.id}-${item.color}-${item.pricingTier}`} className="flex gap-4 group">
-                <div className="w-20 h-24 bg-slate-100 rounded-2xl overflow-hidden flex-shrink-0">
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+              <div key={`${item.id}-${item.color}-${item.size}-${item.pricingTier}`} className="flex gap-4 group animate-in fade-in slide-in-from-right-4">
+                <div className="w-20 h-24 bg-slate-100 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-100">
+                  <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 </div>
                 <div className="flex-grow">
-                  <h4 className="font-black uppercase text-xs text-slate-900 leading-tight mb-1">{item.name}</h4>
-                  <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest mb-2">
-                    {item.pricingTier} • {item.color || 'Standard'}
-                  </p>
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-black uppercase text-xs text-slate-900 leading-tight mb-1 max-w-[180px]">{item.name}</h4>
+                    {item.pricingTier === 'wholesale' ? (
+                      <div className="bg-pink-100 text-pink-600 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <Landmark size={10} />
+                        <span className="text-[8px] font-black uppercase tracking-tighter">Bulk</span>
+                      </div>
+                    ) : (
+                      <div className="bg-purple-100 text-purple-600 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <Tag size={10} />
+                        <span className="text-[8px] font-black uppercase tracking-tighter">Retail</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 mb-3">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                      Color: <span className="text-slate-900">{item.color || 'N/A'}</span>
+                    </p>
+                    {item.size && (
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                        Size: <span className="text-slate-900">{item.size}</span>
+                      </p>
+                    )}
+                  </div>
+
                   <div className="flex justify-between items-center">
-                    <p className="font-black italic text-sm">
+                    <p className={`font-black italic text-sm ${item.pricingTier === 'wholesale' ? 'text-pink-600' : 'text-slate-900'}`}>
                       {item.quantity} x KSh {item.price.toLocaleString()}
                     </p>
                     <button 
-                      onClick={() => removeFromCart(item.id, item.color, item.pricingTier)}
-                      className="text-slate-300 hover:text-red-500 transition-colors"
+                      onClick={() => removeFromCart(item.id, item.color, item.pricingTier, item.size)}
+                      className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                      title="Remove Item"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -68,19 +92,27 @@ export default function CartSidebar() {
 
         {/* FOOTER / CHECKOUT */}
         {cart.length > 0 && (
-          <div className="p-6 border-t bg-slate-50">
-            <div className="flex justify-between items-center mb-6">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Subtotal Total</span>
-              <span className="text-2xl font-black italic">KSh {total.toLocaleString()}</span>
+          <div className="p-6 border-t bg-slate-50 space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 leading-none">Subtotal</span>
+                <span className="text-[8px] font-bold text-slate-400 uppercase mt-1">Excludes Delivery Fee</span>
+              </div>
+              <span className="text-2xl font-black italic tracking-tighter text-slate-900">KSh {total.toLocaleString()}</span>
             </div>
             
             <button 
               onClick={checkout}
-              className="w-full bg-[#25D366] text-white py-5 rounded-[2rem] font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 hover:shadow-[0_10px_30px_rgba(37,211,102,0.3)] transition-all active:scale-95"
+              className="w-full bg-[#25D366] text-white py-5 rounded-[2rem] font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 hover:shadow-[0_15px_30px_rgba(37,211,102,0.3)] transition-all active:scale-95 group relative overflow-hidden"
             >
-              <MessageCircle size={20} fill="currentColor" />
-              Checkout on WhatsApp
+              <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              <MessageCircle size={20} fill="currentColor" className="relative z-10" />
+              <span className="relative z-10">Finalize on WhatsApp</span>
             </button>
+            
+            <p className="text-[8px] text-center font-bold text-slate-400 uppercase tracking-widest">
+              Stock availability confirmed upon dispatch
+            </p>
           </div>
         )}
       </aside>

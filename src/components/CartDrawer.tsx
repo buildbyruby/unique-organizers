@@ -38,20 +38,24 @@ export default function CartDrawer() {
 
             <div className="flex-1 overflow-y-auto space-y-4">
               {cart.map((item: any) => (
-                <div key={`${item.id}-${item.color}`} className="flex gap-4 bg-white/5 p-4 rounded-xl border border-white/10">
-                  <img src={item.image} className="w-20 h-20 object-cover rounded-lg bg-white/10" alt="" />
+                <div key={`${item.id}-${item.color}-${item.pricingTier}`} className="flex gap-4 bg-white/5 p-4 rounded-xl border border-white/10">
+                  <img 
+                    src={item.image || "https://placehold.co/200x200?text=No+Image"} 
+                    className="w-20 h-20 object-cover rounded-lg bg-white/10" 
+                    alt={item.name || "Product"} 
+                  />
                   <div className="flex-1">
-                    <p className="font-bold text-lg leading-none">{item.name}</p>
+                    <p className="font-bold text-lg leading-none">{item.name || "Unknown Product"}</p>
                     <p className="text-purple-400 text-sm font-mono mt-1 italic">
-                      {item.pricingTier.toUpperCase()} • {item.color}
+                      {(item.pricingTier || "RETAIL").toUpperCase()} • {item.color || "Standard"}
                     </p>
                     <div className="flex justify-between items-end mt-2">
                       <p className="font-black text-xl text-white">
-                        {item.quantity}x <span className="text-xs text-gray-400">KSh</span> {item.price.toLocaleString()}
+                        {item.quantity}x <span className="text-xs text-gray-400">KSh</span> {(item.price ?? 0).toLocaleString()}
                       </p>
                       <button 
                         onClick={() => removeFromCart(item.id, item.color, item.pricingTier)}
-                        className="text-gray-500 hover:text-red-500 p-1"
+                        className="text-gray-500 hover:text-red-500 p-1 transition-colors"
                       >
                         <Trash2 size={20} />
                       </button>
@@ -65,12 +69,13 @@ export default function CartDrawer() {
               <div className="flex justify-between items-center mb-6">
                 <span className="text-gray-400 font-bold uppercase tracking-widest text-sm">Grand Total</span>
                 <span className="text-3xl font-black text-white italic">
-                  KSh {cart.reduce((a:any, b:any) => a + (b.price * b.quantity), 0).toLocaleString()}
+                  KSh {cart.reduce((a: any, b: any) => a + ((b.price ?? 0) * (b.quantity ?? 0)), 0).toLocaleString()}
                 </span>
               </div>
               <button 
                 onClick={checkout}
-                className="w-full bg-[#25D366] hover:bg-[#20ba5a] text-black font-black uppercase py-5 rounded-2xl flex items-center justify-center gap-3 text-lg shadow-lg shadow-green-500/20 transition-all active:scale-95"
+                disabled={cart.length === 0}
+                className="w-full bg-[#25D366] hover:bg-[#20ba5a] disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-black uppercase py-5 rounded-2xl flex items-center justify-center gap-3 text-lg shadow-lg shadow-green-500/20 transition-all active:scale-95"
               >
                 <MessageCircle size={28} fill="black" />
                 Send Order to WhatsApp

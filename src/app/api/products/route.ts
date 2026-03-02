@@ -9,21 +9,43 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const product = await prisma.product.create({
-      data: {
-        name: body.name,
-        description: body.description,
-        retailPrice: parseFloat(body.retailPrice),
-        wholesalePrice: parseFloat(body.wholesalePrice),
-        category: body.category,
-        stock: parseInt(body.stock),
-        minWholesale: parseInt(body.minWholesale),
-        images: body.images, // Expecting an array of strings
-        colors: body.colors, // Expecting an array of hex codes
-      }
+    
+    // SAFETY: Robust conversion to ensure images is ALWAYS a clean array of strings
+    let imageArray: string[] = [];
+    if (Array.isArray(body.images)) {
+      imageArray = body.images.filter((img: any) => typeof img === 'string' && img.length > 0);
+    } else if (typeof body.images === 'string' && body.images.trim().length > 0) {
+      imageArray = body.images.split(',').map((s: string) => s.trim()).filter((s: string) => s !== "");
+    }
+
+    // SANITIZATION: Strict numeric parsing to prevent UI "squeezing" from NaN errors
+    const productData = {
+      name: body.name?.trim() || "Untitled Product",
+      description: body.description || "",
+      retailPrice: parseFloat(body.retailPrice) || 0,
+      wholesalePrice: parseFloat(body.wholesalePrice) || 0,
+      category: body.category || "UNCAREGORIZED",
+      stock: parseInt(body.stock) || 0,
+      minWholesale: parseInt(body.minWholesale) || 1,
+      images: imageArray,
+      colors: Array.isArray(body.colors) ? body.colors : [],
+      sizes: Array.isArray(body.sizes) ? body.sizes : [],
+    };
+
+    if (body.id) {
+      const updatedProduct = await prisma.product.update({
+        where: { id: body.id },
+        data: productData
+      });
+      return NextResponse.json(updatedProduct);
+    }
+
+    const newProduct = await prisma.product.create({
+      data: productData
     });
-    return NextResponse.json(product);
+    return NextResponse.json(newProduct);
   } catch (error) {
-    return NextResponse.json({ error: 'Error creating product' }, { status: 500 });
+    console.error("API POST Error:", error);
+    return NextResponse.json({ error: 'Error processing product synchronization' }, { status: 500 });
   }
 }
