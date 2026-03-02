@@ -45,7 +45,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         price: activePrice, 
         quantity: quantity, 
         color: color, 
-        image: product.images[0],
+        image: product.images?.[0] || "/placeholder-product.jpg",
         pricingTier: pricingTier
       }];
     });

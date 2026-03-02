@@ -290,7 +290,7 @@ export default async function HomePage(props: {
             {products.map((product) => (
               <Link key={product.id} href={`/product/${product.id}`} className="group bg-white/40 backdrop-blur-2xl rounded-[2rem] p-2 transition-all duration-700 hover:-translate-y-2 flex flex-col overflow-hidden shadow-sm">
                 <div className="aspect-[4/5] rounded-[1.5rem] overflow-hidden bg-slate-100 relative shadow-inner">
-                  <img src={product.images[0] || "/placeholder-product.jpg"} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                  <img src={product.images?.[0] || "/placeholder-product.jpg"} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                   <div className="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur-xl px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest text-slate-900">
                     {product.category.replace('_', ' ')}
                   </div>

@@ -11,6 +11,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const id = (await params).id;
   const body = await request.json();
   
+  const normalizedImages = Array.isArray(body.images)
+    ? body.images
+    : [body.images ?? body.image ?? body.imageUrl].filter(Boolean);
+
+  const images = normalizedImages.filter((url: unknown): url is string => typeof url === 'string' && url.length > 0);
+
   const product = await prisma.product.update({
     where: { id },
     data: {
@@ -19,8 +25,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       retailPrice: parseFloat(body.retailPrice),
       wholesalePrice: parseFloat(body.wholesalePrice),
       stock: parseInt(body.stock),
-      images: body.images,
-      colors: body.colors,
+      minWholesale: parseInt(body.minWholesale),
+      images,
+      colors: Array.isArray(body.colors) ? body.colors : [],
     }
   });
   return NextResponse.json(product);

@@ -187,9 +187,9 @@ export default function AdminDashboard() {
 
             <textarea placeholder="Description" className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs h-24" value={form.description} onChange={e => setForm({...form, description: e.target.value})} required />
             
-            <div className="grid grid-cols-2 gap-4">
-               <input type="number" placeholder="Retail Price" className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold" value={form.retailPrice} onChange={e => setForm({...form, retailPrice: e.target.value})} required />
-               <input type="number" placeholder="Wholesale" className="w-full bg-purple-50 border border-purple-100 rounded-2xl p-4 text-xs font-black text-purple-600" value={form.wholesalePrice} onChange={e => setForm({...form, wholesalePrice: e.target.value})} required />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <input type="number" placeholder="Retail Price" className="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-sm font-bold" value={form.retailPrice} onChange={e => setForm({...form, retailPrice: e.target.value})} required />
+               <input type="number" placeholder="Wholesale" className="w-full min-w-0 bg-purple-50 border border-purple-100 rounded-2xl px-4 py-4 text-sm font-black text-purple-600" value={form.wholesalePrice} onChange={e => setForm({...form, wholesalePrice: e.target.value})} required />
             </div>
 
             <div className="flex flex-wrap gap-4 p-4 bg-slate-50 rounded-3xl">
@@ -220,7 +220,7 @@ export default function AdminDashboard() {
             <div className="grid gap-4">
               {products.map((product) => (
                 <div key={product.id} className="p-4 bg-white border border-slate-100 rounded-[2rem] flex items-center gap-6 shadow-sm group">
-                  <img src={product.images[0]} className="w-16 h-16 rounded-2xl object-cover grayscale group-hover:grayscale-0 transition-all" />
+                  <img src={product.images?.[0] || '/placeholder-product.jpg'} className="w-16 h-16 rounded-2xl object-cover grayscale group-hover:grayscale-0 transition-all" />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <select 

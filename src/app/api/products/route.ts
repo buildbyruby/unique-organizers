@@ -9,17 +9,23 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const normalizedImages = Array.isArray(body.images)
+      ? body.images
+      : [body.images ?? body.image ?? body.imageUrl].filter(Boolean);
+
+    const images = normalizedImages.filter((url: unknown): url is string => typeof url === 'string' && url.length > 0);
+
     const product = await prisma.product.create({
       data: {
         name: body.name,
         description: body.description,
-        retailPrice: parseFloat(body.retailPrice),
-        wholesalePrice: parseFloat(body.wholesalePrice),
+        retailPrice: parseFloat(body.retailPrice) || 0,
+        wholesalePrice: parseFloat(body.wholesalePrice) || 0,
         category: body.category,
-        stock: parseInt(body.stock),
-        minWholesale: parseInt(body.minWholesale),
-        images: body.images, // Expecting an array of strings
-        colors: body.colors, // Expecting an array of hex codes
+        stock: parseInt(body.stock) || 0,
+        minWholesale: parseInt(body.minWholesale) || 1,
+        images,
+        colors: Array.isArray(body.colors) ? body.colors : [],
       }
     });
     return NextResponse.json(product);

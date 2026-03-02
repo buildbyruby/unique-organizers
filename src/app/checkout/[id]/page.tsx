@@ -97,7 +97,7 @@ export default function ProductDetailPage() {
         {/* IMAGE */}
         <div className="relative">
           <img
-            src={product.images[0]}
+            src={product.images?.[0] || "/placeholder-product.jpg"}
             alt={product.name}
             className="rounded-[3rem] border border-white/10"
           />

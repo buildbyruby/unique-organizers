@@ -102,14 +102,14 @@ export default function AddProductPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Retail_Price (KSh)</label>
-              <input name="retailPrice" type="number" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:border-purple-500 outline-none" />
+              <input name="retailPrice" type="number" required className="w-full min-w-0 bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:border-purple-500 outline-none" />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Stock_Quantity</label>
-              <input name="stock" type="number" required defaultValue="20" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:border-purple-500 outline-none" />
+              <input name="stock" type="number" required defaultValue="20" className="w-full min-w-0 bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:border-purple-500 outline-none" />
             </div>
           </div>
 

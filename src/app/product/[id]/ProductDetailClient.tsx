@@ -103,7 +103,7 @@ export default function ProductDetailClient({ product }: { product: any }) {
           <div className="absolute -inset-1 bg-gradient-to-tr from-purple-600 to-pink-600 rounded-[3rem] blur-2xl opacity-10 group-hover:opacity-20 transition duration-1000"></div>
           <div className="relative aspect-[4/5] rounded-[3rem] overflow-hidden border border-white/10 bg-black shadow-2xl">
             <img 
-              src={product.images?.[0] || "/api/placeholder/800/1000"} 
+              src={product.images?.[0] || "/placeholder-product.jpg"} 
               alt={product.name} 
               className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
             />
