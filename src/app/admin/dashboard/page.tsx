@@ -18,24 +18,57 @@ const COLOR_PRESETS = [
 const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL", "Free Size"];
 const GENDER_OPTIONS = ["Unisex", "Men", "Women", "Kids"];
 
-const CATEGORY_OPTIONS = [
-  { name: "Kitchen & Dining", slug: "KITCHEN" },
-  { name: "Home & Living", slug: "HOME_LIVING" },
-  { name: "Gifts & Occasions", slug: "GIFTS" },
-  { name: "Electronics", slug: "ELECTRONICS" },
-  { name: "Clothing & Apparel", slug: "CLOTHING" },
-  { name: "Beauty & Personal Care", slug: "BEAUTY" },
-  { name: "Grocery & Food", slug: "GROCERY" },
-  { name: "Toys & Baby", slug: "TOYS" },
-  { name: "Sports & Outdoors", slug: "SPORTS" },
-  { name: "Automotive Elite", slug: "AUTOMOTIVE" },
-  { name: "Pet Supplies", slug: "PETS" },
-  { name: "Tools & Hardware", slug: "TOOLS" },
-  { name: "Office Supplies", slug: "OFFICE" },
-  { name: "Health & Wellness", slug: "HEALTH" },
-  { name: "Entertainment", slug: "ENTERTAINMENT" },
-  { name: "Garden & Outdoor", slug: "GARDEN" },
-];
+// ELITE CATEGORY STRUCTURE
+const CATEGORY_STRUCTURE: Record<string, { label: string, subcategories: string[] }> = {
+  KITCHEN: {
+    label: "Kitchen & Dining",
+    subcategories: ["Small Appliances", "Storage & Organizers", "Cookware", "Plates & Dining", "Cutlery", "Lighting", "Barware", "Tea & Coffee Gear"]
+  },
+  HOME_LIVING: {
+    label: "Home & Living",
+    subcategories: ["Decor", "Furniture", "Rugs", "Bedding", "Cushions", "Candles & Scents", "Curtains", "Wall Art", "Mirrors"]
+  },
+  GIFTS: {
+    label: "Gifts & Occasions",
+    subcategories: ["Corporate", "Birthday", "Wedding", "Luxury Hampers", "Anniversary", "Baby Shower", "Seasonal", "Greeting Cards"]
+  },
+  ELECTRONICS: {
+    label: "Electronics",
+    subcategories: ["Audio", "Gadgets", "Smart Home", "Office Gear", "Photography", "Wearables", "Gaming", "Power & Cables"]
+  },
+  CLOTHING: {
+    label: "Clothing & Apparel",
+    subcategories: ["Men", "Women", "Kids", "Accessories", "Footwear", "Activewear", "Sleepwear", "Outerwear"]
+  },
+  BEAUTY: {
+    label: "Beauty & Personal Care",
+    subcategories: ["Skincare", "Makeup", "Fragrance", "Haircare", "Men's Grooming", "Beauty Tools", "Bath & Body", "Oral Care"]
+  },
+  GROCERY: {
+    label: "Grocery & Food",
+    subcategories: ["Dry Goods", "Beverages", "Spices", "Snacks", "Coffee & Tea", "Organic", "Condiments", "Baking Essentials"]
+  },
+  TOYS: {
+    label: "Toys & Baby",
+    subcategories: ["Educational", "Plush", "Baby Gear", "Games", "Outdoor Play", "Building Sets", "Puzzles"]
+  },
+  SPORTS: {
+    label: "Sports & Outdoors",
+    subcategories: ["Fitness", "Camping", "Cycling", "Swimming", "Team Sports", "Active Gear", "Yoga & Pilates"]
+  },
+  TOOLS: {
+    label: "Tools & Hardware",
+    subcategories: ["Hand Tools", "Power Tools", "Organizers", "Safety Gear", "Gardening Tools", "Home Improvement"]
+  },
+  OFFICE: {
+    label: "Office Supplies",
+    subcategories: ["Stationery", "Desk Organizers", "Tech Accessories", "Writing Tools", "Paper Products", "Filing & Storage"]
+  },
+  HEALTH: {
+    label: "Health & Wellness",
+    subcategories: ["Supplements", "Personal Care", "Yoga & Meditation", "Massagers", "Aromatherapy", "Fitness Trackers"]
+  }
+};
 
 export default function AdminDashboard() {
   const [products, setProducts] = useState<any[]>([]);
@@ -48,22 +81,29 @@ export default function AdminDashboard() {
   
   const [form, setForm] = useState({
     id: '', name: '', description: '', retailPrice: '', wholesalePrice: '', 
-    discountPrice: '', category: CATEGORY_OPTIONS[0].slug,
+    discountPrice: '', category: 'KITCHEN', subCategory: '',
     stock: '20', minWholesale: '5', 
-    images: '', colors: [] as string[], sizes: [] as string[], gender: 'Unisex'
+    images: [] as string[], 
+    colors: [] as string[], 
+    sizes: [] as string[], 
+    gender: 'Unisex'
   });
 
-  // ROBUST IMAGE RESOLUTION LOGIC
   const resolveImageUrl = (images: any): string => {
-    if (!images) return 'https://placehold.co/400x400/f1f5f9/94a3b8?text=No+Image';
-    if (Array.isArray(images)) return images[0] || '';
+    const fallback = 'https://placehold.co/400x400/f1f5f9/94a3b8?text=No+Image';
+    if (!images) return fallback;
+    
+    let parsed = images;
     if (typeof images === 'string') {
       if (images.startsWith('[')) {
-        try { return JSON.parse(images)[0]; } catch { return images; }
+        try { parsed = JSON.parse(images); } catch { parsed = images.split(','); }
+      } else {
+        parsed = images.split(',').map((s: string) => s.trim()).filter(Boolean);
       }
-      return images.split(',')[0].trim();
     }
-    return '';
+    
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+    return typeof parsed === 'string' && parsed ? parsed : fallback;
   };
 
   const formatNumber = (val: string) => {
@@ -98,9 +138,13 @@ export default function AdminDashboard() {
 
   const handleEditInit = (product: any) => {
     setEditMode(true);
-    const imageString = Array.isArray(product.images) 
-      ? product.images.join(', ') 
-      : (product.images || '');
+    
+    let imagesArray: string[] = [];
+    if (Array.isArray(product.images)) {
+        imagesArray = product.images;
+    } else if (typeof product.images === 'string') {
+        imagesArray = product.images.split(',').map((s: string) => s.trim()).filter(Boolean);
+    }
 
     setForm({
       id: product.id,
@@ -110,9 +154,10 @@ export default function AdminDashboard() {
       wholesalePrice: formatNumber((product.wholesalePrice || 0).toString()),
       discountPrice: product.discountPrice ? formatNumber(product.discountPrice.toString()) : '',
       category: product.category,
+      subCategory: product.subCategory || '',
       stock: product.stock.toString(),
       minWholesale: (product.minWholesale || 5).toString(),
-      images: imageString,
+      images: imagesArray,
       colors: product.colors || [],
       sizes: product.sizes || [],
       gender: product.gender || 'Unisex'
@@ -124,9 +169,9 @@ export default function AdminDashboard() {
     setEditMode(false);
     setForm({
       id: '', name: '', description: '', retailPrice: '', wholesalePrice: '', 
-      discountPrice: '', category: CATEGORY_OPTIONS[0].slug,
+      discountPrice: '', category: 'KITCHEN', subCategory: '',
       stock: '20', minWholesale: '5', 
-      images: '', colors: [], sizes: [], gender: 'Unisex'
+      images: [], colors: [], sizes: [], gender: 'Unisex'
     });
   };
 
@@ -149,7 +194,7 @@ export default function AdminDashboard() {
       }, (error: any, result: any) => {
         if (!error && result && result.event === "success") {
           const newUrl = result.info.secure_url;
-          setForm(prev => ({ ...prev, images: prev.images ? prev.images + `, ${newUrl}` : newUrl }));
+          setForm(prev => ({ ...prev, images: [...prev.images, newUrl] }));
         }
       });
       widget.open();
@@ -179,6 +224,7 @@ export default function AdminDashboard() {
     formData.append("name", form.name);
     formData.append("description", form.description);
     formData.append("category", form.category);
+    formData.append("subCategory", form.subCategory);
     
     const rPrice = stripNumber(form.retailPrice);
     const wPrice = stripNumber(form.wholesalePrice);
@@ -195,8 +241,7 @@ export default function AdminDashboard() {
     formData.append("minWholesale", form.minWholesale);
     formData.append("gender", form.gender);
     
-    const imageUrls = form.images.split(',').map(s => s.trim()).filter(s => s !== "");
-    imageUrls.forEach(url => formData.append("images", url));
+    form.images.forEach(url => formData.append("images", url));
     form.colors.forEach(c => formData.append("colors", c));
     form.sizes.forEach(s => formData.append("sizes", s));
 
@@ -252,7 +297,6 @@ export default function AdminDashboard() {
 
       <main className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-10">
         
-        {/* MODIFY ASSET FORM - EXPANDED COLUMNS */}
         <div className={`lg:col-span-5 border p-10 rounded-[3rem] h-fit lg:sticky lg:top-8 shadow-xl transition-all ${editMode ? 'bg-purple-50 border-purple-200' : 'bg-white border-slate-200'}`}>
           <div className="flex justify-between items-center mb-10">
             <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-3 text-black">
@@ -275,12 +319,33 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">Category</label>
-                <select className="w-full bg-white border border-slate-200 rounded-2xl p-5 text-xs font-bold outline-none cursor-pointer" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
-                  {CATEGORY_OPTIONS.map((cat) => (
-                    <option key={cat.slug} value={cat.slug}>{cat.name}</option>
+                <select 
+                  className="w-full bg-white border border-slate-200 rounded-2xl p-5 text-xs font-bold outline-none cursor-pointer" 
+                  value={form.category} 
+                  onChange={e => setForm({...form, category: e.target.value, subCategory: ''})}
+                >
+                  {Object.entries(CATEGORY_STRUCTURE).map(([slug, data]) => (
+                    <option key={slug} value={slug}>{data.label}</option>
                   ))}
                 </select>
               </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">Sub Category</label>
+                <select 
+                  className="w-full bg-white border border-slate-200 rounded-2xl p-5 text-xs font-bold outline-none cursor-pointer disabled:opacity-50" 
+                  value={form.subCategory} 
+                  onChange={e => setForm({...form, subCategory: e.target.value})}
+                  required
+                >
+                  <option value="">Select Option</option>
+                  {CATEGORY_STRUCTURE[form.category]?.subcategories.map(sub => (
+                    <option key={sub} value={sub}>{sub}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">Gender</label>
                 <select className="w-full bg-white border border-slate-200 rounded-2xl p-5 text-xs font-bold outline-none cursor-pointer" value={form.gender} onChange={e => setForm({...form, gender: e.target.value})}>
@@ -289,7 +354,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* PRICING MATRIX - EXPANDED SPACING & PADDING */}
             <div className="bg-slate-900 p-8 rounded-[2.5rem] shadow-2xl border border-white/5">
               <div className="flex items-center gap-2 mb-6">
                 <Layers size={14} className="text-purple-400" />
@@ -343,9 +407,32 @@ export default function AdminDashboard() {
             <div className="relative space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">Media Channels</label>
               <div className="relative">
-                <input placeholder="Cloudinary or external URL..." className="w-full bg-white border border-slate-200 rounded-2xl p-5 text-[10px] pr-16 outline-none focus:ring-2 focus:ring-purple-600 transition-all" value={form.images} onChange={e => setForm({...form, images: e.target.value})} required />
+                <input 
+                  placeholder="Paste URL here..." 
+                  className="w-full bg-white border border-slate-200 rounded-2xl p-5 text-[10px] pr-16 outline-none focus:ring-2 focus:ring-purple-600 transition-all" 
+                  value={form.images.join(', ')} 
+                  onChange={e => setForm({...form, images: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})} 
+                  required 
+                />
                 <button type="button" onClick={openCloudinary} className="absolute right-4 top-1/2 -translate-y-1/2 text-purple-600 hover:scale-125 transition-transform"><ImagePlus size={22}/></button>
               </div>
+
+              {form.images.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-4 p-4 bg-white rounded-2xl border border-slate-200">
+                  {form.images.map((url, index) => (
+                    <div key={index} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-100 group">
+                      <img src={url} alt="preview" className="w-full h-full object-cover" />
+                      <button 
+                        type="button" 
+                        onClick={() => setForm(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }))}
+                        className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <button disabled={formLoading} className={`w-full py-7 rounded-[2.5rem] text-[12px] font-black uppercase tracking-[0.4em] transition-all shadow-2xl ${editMode ? 'bg-black text-white hover:bg-purple-600' : 'bg-purple-600 text-white hover:bg-black shadow-purple-500/30'}`}>
@@ -354,7 +441,6 @@ export default function AdminDashboard() {
           </form>
         </div>
 
-        {/* INVENTORY LIST */}
         <div className="lg:col-span-7 space-y-12">
           <section className="space-y-6">
             <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-3 text-black px-4 leading-none">
@@ -386,10 +472,12 @@ export default function AdminDashboard() {
                         value={product.category}
                         onChange={(e) => handleCategoryChange(product.id, e.target.value)}
                       >
-                        {CATEGORY_OPTIONS.map(opt => (
-                          <option key={opt.slug} value={opt.slug}>{opt.name.toUpperCase()}</option>
+                        {Object.entries(CATEGORY_STRUCTURE).map(([slug, data]) => (
+                          <option key={slug} value={slug}>{data.label.toUpperCase()}</option>
                         ))}
                       </select>
+                      <span className="text-[8px] font-black text-slate-300 uppercase">/</span>
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{product.subCategory || 'General'}</span>
                       {updatingId === product.id && <Loader2 size={10} className="animate-spin text-purple-500" />}
                     </div>
                     <h4 className="text-lg font-black text-black uppercase italic tracking-tighter leading-none mb-4">{product.name}</h4>

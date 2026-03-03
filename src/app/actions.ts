@@ -66,8 +66,8 @@ export async function getDetailedAnalytics(): Promise<ActionResponse> {
         })),
         adStats: adverts.map(ad => ({ 
           title: ad.title, 
-          clicks: Math.floor(Math.random() * 20), 
-          impressions: Math.floor(Math.random() * 200) + 50 
+          clicks: ad.clicks, 
+          impressions: ad.impressions 
         })),
         inventory: products
       }
@@ -121,13 +121,14 @@ export async function getDashboardData() {
   }
 }
 
-// --- 2. ADVERT MANAGEMENT ---
+// --- 2. ADVERT MANAGEMENT (ENHANCED FOR EDIT FLOW & CLOUDINARY WIDGET) ---
 export async function upsertAdvert(formData: FormData): Promise<ActionResponse> {
   try {
     const id = formData.get("id") as string;
     const file = formData.get("image") as File;
     let imageUrl = formData.get("imageUrl") as string;
 
+    // Handle legacy buffer upload or widget URL
     if (file && file instanceof File && file.size > 0) {
       imageUrl = await uploadToCloudinary(file, "image");
     }
@@ -137,8 +138,10 @@ export async function upsertAdvert(formData: FormData): Promise<ActionResponse> 
       link: formData.get("link") as string,
       imageUrl: imageUrl,
       description: formData.get("description") as string || "",
-      duration: parseInt(formData.get("duration") as string) || 0,
-      type: formData.get("type") as string || "IMAGE",
+      duration: parseInt(formData.get("duration") as string) || 5,
+      priority: parseInt(formData.get("priority") as string) || 0,
+      type: formData.get("type") as string || "HERO",
+      isActive: formData.get("isActive") === "true",
     };
 
     if (id && id !== "null" && id !== "") {
@@ -151,6 +154,7 @@ export async function upsertAdvert(formData: FormData): Promise<ActionResponse> 
     revalidatePath("/admin/adverts");
     return { success: true, message: "ADVERT_SAVED" };
   } catch (error) {
+    console.error("ADVERT_SAVE_ERROR:", error);
     return { success: false, message: "ADVERT_SAVE_FAILED" };
   }
 }
@@ -162,6 +166,23 @@ export async function deleteAdvert(id: string): Promise<ActionResponse> {
     return { success: true, message: "ADVERT_DELETED" };
   } catch (error) {
     return { success: false, message: "DELETE_FAILED" };
+  }
+}
+
+// NEW ACTION: Increment Impressions or Clicks
+export async function trackAdvertEngagement(advertId: string, type: "impression" | "click") {
+  try {
+    await prisma.advert.update({
+      where: { id: advertId },
+      data: {
+        [type === "impression" ? "impressions" : "clicks"]: {
+          increment: 1
+        }
+      }
+    });
+    return { success: true };
+  } catch (error) {
+    return { success: false };
   }
 }
 
@@ -228,27 +249,27 @@ export async function logout() {
 export async function upsertProduct(formData: FormData): Promise<ActionResponse> {
   try {
     const id = formData.get("id") as string;
-    const retailPrice = parseFloat((formData.get("retailPrice") as string || "0").replace(/,/g, ''));
-    const wholesalePrice = parseFloat((formData.get("wholesalePrice") as string || "0").replace(/,/g, '')) || 0;
-    const discountPriceVal = formData.get("discountPrice") as string;
-    const discountPrice = discountPriceVal ? parseFloat(discountPriceVal.replace(/,/g, '')) : null;
-    const stock = parseInt((formData.get("stock") as string || "0").replace(/,/g, ''));
-    const minWholesale = parseInt((formData.get("minWholesale") as string || "1").replace(/,/g, ''));
+    
+    const parsePrice = (key: string) => {
+        const val = formData.get(key);
+        if (!val) return 0;
+        return parseFloat(val.toString().replace(/[^\d.]/g, '')) || 0;
+    };
 
-    let finalImages: string[] = [];
-    const newFiles = [
-      ...formData.getAll("images"),
-      ...formData.getAll("image")
-    ].filter(f => f instanceof File && f.size > 0) as File[];
+    const allImageData = [
+        ...formData.getAll("images"),
+        ...formData.getAll("image")
+    ];
+    
+    const existingUrls = allImageData.filter(item => typeof item === 'string' && item.startsWith('http')) as string[];
+    const rawFiles = allImageData.filter(item => item instanceof File && item.size > 0) as File[];
 
-    if (newFiles.length > 0) {
-      const uploaded = await Promise.all(newFiles.map(file => uploadToCloudinary(file, "image")));
-      finalImages = [...uploaded];
+    let finalImages: string[] = [...existingUrls];
+
+    if (rawFiles.length > 0) {
+      const uploaded = await Promise.all(rawFiles.map(file => uploadToCloudinary(file, "image")));
+      finalImages = [...finalImages, ...uploaded];
     }
-
-    const existingImagesStr = formData.get("existingImages")?.toString();
-    const existingImages = existingImagesStr ? existingImagesStr.split(',').filter(Boolean) : [];
-    finalImages = [...finalImages, ...existingImages];
 
     if (finalImages.length === 0 && id && id !== "null" && id !== "") {
         const current = await prisma.product.findUnique({ where: { id }, select: { images: true } });
@@ -257,24 +278,26 @@ export async function upsertProduct(formData: FormData): Promise<ActionResponse>
 
     const data: any = {
       name: formData.get("name") as string,
-      description: formData.get("description") as string,
-      category: formData.get("category") as string,
+      description: formData.get("description") as string || "",
+      category: formData.get("category") as string || "General",
       subCategory: formData.get("subCategory") as string || "",
-      retailPrice,
-      wholesalePrice,
-      discountPrice,
-      isDiscounted: !!(discountPrice && discountPrice > 0),
-      stock,
-      minWholesale,
-      images: finalImages,
-      colors: (formData.get("colors") as string)?.split(",").map(c => c.trim()).filter(Boolean) || [],
-      sizes: (formData.get("sizes") as string)?.split(",").map(s => s.trim()).filter(Boolean) || [],
+      retailPrice: parsePrice("retailPrice"),
+      wholesalePrice: parsePrice("wholesalePrice"),
+      discountPrice: parsePrice("discountPrice") || null,
+      isDiscounted: !!(parsePrice("discountPrice") > 0),
+      stock: parseInt(formData.get("stock")?.toString().replace(/[^\d]/g, '') || "0"),
+      minWholesale: parseInt(formData.get("minWholesale")?.toString().replace(/[^\d]/g, '') || "1"),
+      images: finalImages, 
+      colors: formData.getAll("colors") as string[],
+      sizes: formData.getAll("sizes") as string[],
+      gender: formData.get("gender") as string || "Unisex",
       isStockOpen: true
     };
 
     if (id && id !== "null" && id !== "") {
       await prisma.product.update({ where: { id }, data });
     } else {
+      if (finalImages.length === 0) throw new Error("At least one image is required.");
       await prisma.product.create({ data });
     }
 
@@ -282,11 +305,11 @@ export async function upsertProduct(formData: FormData): Promise<ActionResponse>
     revalidatePath("/admin");
     return { success: true, message: "PRODUCT_SAVED" };
   } catch (error: any) {
+    console.error("CRITICAL ACTION ERROR:", error);
     return { success: false, message: error.message || "SAVE_FAILED" };
   }
 }
 
-// CRITICAL FIX: Explicit export for your 'new/page.tsx'
 export const createProduct = upsertProduct;
 
 export async function deleteProduct(id: string): Promise<ActionResponse> {
@@ -534,7 +557,6 @@ export async function trackEngagement(productId: string, eventType: string, meta
   } catch (error) {}
 }
 
-// FIX: Added missing export for build
 export async function updateProductCategory(productId: string, category: string): Promise<ActionResponse> {
   try {
     await prisma.product.update({

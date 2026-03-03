@@ -1,10 +1,23 @@
+'use client'
+
+import { useState } from 'react'
 import { createProduct } from '../../actions'
 import Link from 'next/link'
-import { ArrowLeft, Sparkles, Tag, CircleDollarSign, Upload, Box, Palette, Layers } from 'lucide-react'
+import { ArrowLeft, Sparkles, Tag, CircleDollarSign, Upload, Box, Palette, Layers, Percent } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
+// 1. The CATEGORY_MAP Architecture
+const CATEGORY_MAP = {
+  ELECTRONICS: ['Gadgets', 'Audio', 'Smart Home', 'Computing'],
+  FURNITURE: ['Office', 'Living Room', 'Bedroom', 'Outdoor'],
+  DECOR: ['Wall Art', 'Lighting', 'Vases', 'Mirrors'],
+  KITCHEN: ['Cookware', 'Appliances', 'Cutlery', 'Storage'],
+}
+
+type CategoryKey = keyof typeof CATEGORY_MAP;
 
 export default function NewProductPage() {
+  const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('ELECTRONICS');
+
   return (
     <div className="min-h-screen bg-[#020203] text-white p-4 md:p-8 font-sans">
       <div className="max-w-3xl mx-auto">
@@ -14,12 +27,12 @@ export default function NewProductPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-black uppercase tracking-tighter flex items-center gap-2">
-              <Sparkles className="text-purple-500" size={20} /> Add New Inventory
+              <Sparkles className="text-purple-500" size={20} /> Unified Product Manager
             </h1>
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Deploying to Storefront Assets</p>
           </div>
         </div>
 
-        {/* Form with improved spacing and non-squeezed inputs */}
         <form action={createProduct} className="space-y-6" encType="multipart/form-data">
           <div className="bg-[#0a0a0c] border border-white/5 p-6 md:p-10 rounded-[2.5rem] space-y-8 shadow-2xl">
             
@@ -34,29 +47,70 @@ export default function NewProductPage() {
               <textarea name="description" required rows={4} placeholder="Tell the customers about this item..." className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-sm outline-none focus:border-purple-500 transition-all" />
             </div>
 
-            {/* Pricing Section - Expanded for better visibility */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Pricing Matrix (The Value Matrix) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-4 flex items-center gap-1">
-                  <Tag size={10} /> Retail Price
+                  <Tag size={10} /> Retail
                 </label>
                 <div className="relative">
-                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-xs">KSh</span>
-                  <input name="retailPrice" type="number" required placeholder="0.00" className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 pl-14 text-sm font-bold focus:border-white outline-none" />
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-xs">KSh</span>
+                  <input name="retailPrice" type="number" required placeholder="0" className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 pl-12 text-sm font-bold focus:border-white outline-none" />
                 </div>
               </div>
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-widest text-pink-500 pl-4 flex items-center gap-1">
-                  <CircleDollarSign size={10} /> Wholesale Price
+                  <CircleDollarSign size={10} /> Wholesale
                 </label>
                 <div className="relative">
-                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-pink-500/50 font-bold text-xs">KSh</span>
-                  <input name="wholesalePrice" type="number" placeholder="0.00" className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 pl-14 text-sm font-bold focus:border-pink-500 outline-none text-pink-500" />
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-500/50 font-bold text-xs">KSh</span>
+                  <input name="wholesalePrice" type="number" placeholder="0" className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 pl-12 text-sm font-bold focus:border-pink-500 outline-none text-pink-500" />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-emerald-500 pl-4 flex items-center gap-1">
+                  <Percent size={10} /> Discount
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500/50 font-bold text-xs">KSh</span>
+                  <input name="discountPrice" type="number" placeholder="0" className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 pl-12 text-sm font-bold focus:border-emerald-500 outline-none text-emerald-500" />
                 </div>
               </div>
             </div>
 
-            {/* Inventory Controls */}
+            {/* Dynamic Categorization Logic */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-4 flex items-center gap-1">
+                  <Layers size={10} /> Main Category
+                </label>
+                <select 
+                  name="category" 
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value as CategoryKey)}
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-sm font-bold outline-none cursor-pointer appearance-none hover:border-purple-500 transition-all"
+                >
+                  {Object.keys(CATEGORY_MAP).map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-purple-400 pl-4 flex items-center gap-1">
+                  <Sparkles size={10} /> Sub-Tag
+                </label>
+                <select 
+                  name="subTag" 
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-sm font-bold outline-none cursor-pointer appearance-none hover:border-purple-500 transition-all shadow-[0_0_20px_rgba(168,85,247,0.1)]"
+                >
+                  {CATEGORY_MAP[selectedCategory].map(tag => (
+                    <option key={tag} value={tag}>{tag}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Inventory & Options */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-4 flex items-center gap-1">
@@ -64,37 +118,18 @@ export default function NewProductPage() {
                 </label>
                 <input name="stock" type="number" required defaultValue="0" className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-sm font-bold focus:border-white outline-none" />
               </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-4 flex items-center gap-1">
-                  <Layers size={10} /> Category
-                </label>
-                <select name="category" className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-sm font-bold outline-none cursor-pointer appearance-none hover:border-purple-500 transition-all">
-                  <option value="ELECTRONICS">Electronics</option>
-                  <option value="FURNITURE">Furniture</option>
-                  <option value="DECOR">Decor</option>
-                  <option value="KITCHEN">Kitchen</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Product Options */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-4 flex items-center gap-1">
-                  <Palette size={10} /> Colors (Comma separated)
+                  <Palette size={10} /> Colors
                 </label>
                 <input name="colors" placeholder="Red, Blue, Green" className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-sm font-bold focus:border-white outline-none" />
-              </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-4">Sizes (Comma separated)</label>
-                <input name="sizes" placeholder="Small, Large, XL" className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-sm font-bold focus:border-white outline-none" />
               </div>
             </div>
 
             {/* Image Upload Area */}
             <div className="space-y-3">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-4 flex items-center gap-1">
-                <Upload size={10} /> Upload Images
+                <Upload size={10} /> Cloudinary Asset Sync
               </label>
               <div className="relative group">
                 <input 
@@ -106,7 +141,7 @@ export default function NewProductPage() {
                 />
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-gray-500 group-hover:text-purple-400">
                    <Upload size={32} className="mb-3" />
-                   <p className="text-[10px] font-black uppercase tracking-[0.2em]">Drop files or click to browse</p>
+                   <p className="text-[10px] font-black uppercase tracking-[0.2em]">Upload Product Media</p>
                 </div>
               </div>
             </div>

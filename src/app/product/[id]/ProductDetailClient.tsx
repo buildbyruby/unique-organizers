@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useCart } from '@/context/CartContext'
 import { 
   ShoppingCart, 
@@ -24,12 +25,9 @@ export default function ProductDetailClient({ product }: { product: any }) {
   const [wishlistActive, setWishlistActive] = useState(false)
   const { addToCart } = useCart()
 
-  // STRICT DATA INTEGRITY: Capturing Color
   const [selectedColor, setSelectedColor] = useState(
     product?.colors && product.colors.length > 0 ? product.colors[0] : "Standard"
   )
-
-  // STRICT DATA INTEGRITY: Capturing Size
   const [selectedSize, setSelectedSize] = useState(
     product?.sizes && product.sizes.length > 0 ? product.sizes[0] : "N/A"
   )
@@ -57,23 +55,14 @@ export default function ProductDetailClient({ product }: { product: any }) {
     );
   };
 
-  /**
-   * TOGGLE WISHLIST LOGIC
-   * Synchronized with your /api/products/[id] POST route
-   */
   const handleToggleWishlist = async () => {
     setIsWishlisting(true);
     try {
-      const res = await fetch(`/api/products/${product.id}`, { 
-        method: 'POST'
-      });
-      
+      const res = await fetch(`/api/products/${product.id}`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
-        // The API returns { active: true } or { active: false }
         setWishlistActive(data.active);
       } else if (res.status === 401) {
-        // Redirect to login if unauthorized
         window.location.href = '/login';
       }
     } catch (error) {
@@ -85,7 +74,6 @@ export default function ProductDetailClient({ product }: { product: any }) {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-purple-500/30">
-      {/* NAVIGATION TERMINAL */}
       <nav className="p-8 max-w-7xl mx-auto flex justify-between items-center">
         <Link href="/" className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 hover:text-white transition">
           <ArrowLeft size={16} /> Return to Archives
@@ -96,17 +84,27 @@ export default function ProductDetailClient({ product }: { product: any }) {
       </nav>
 
       <main className="max-w-7xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-20 py-12">
-        {/* VISUAL ASSET DISPLAY */}
         <div className="relative group">
           <div className="absolute -inset-4 bg-purple-600/20 rounded-[4rem] blur-3xl opacity-0 group-hover:opacity-100 transition duration-1000" />
           <div className="relative aspect-[4/5] rounded-[3rem] overflow-hidden border border-white/10 bg-black">
-            <img 
-              src={product.images?.[0] || 'https://placehold.co/600x800'} 
-              alt={product.name} 
-              className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition duration-700"
-            />
-            
-            {/* WISHLIST TOGGLE BUTTON */}
+            {product.images && product.images.length > 0 && product.images[0] ? (
+              <Image
+                src={product.images[0]}
+                alt={product.name}
+                fill
+                className="object-cover opacity-90 group-hover:scale-105 transition duration-700"
+                unoptimized
+              />
+            ) : (
+              <Image
+                src="https://placehold.co/600x800"
+                alt="Placeholder"
+                fill
+                className="object-cover opacity-90"
+                unoptimized
+              />
+            )}
+
             <button 
               onClick={handleToggleWishlist}
               disabled={isWishlisting}
@@ -124,7 +122,6 @@ export default function ProductDetailClient({ product }: { product: any }) {
           </div>
         </div>
 
-        {/* DATA & ACQUISITION PANEL */}
         <div className="flex flex-col justify-center">
           <div className="mb-10">
             <span className="text-purple-500 text-[10px] font-black uppercase tracking-[0.5em] mb-4 block animate-pulse">
@@ -138,7 +135,6 @@ export default function ProductDetailClient({ product }: { product: any }) {
             </p>
           </div>
 
-          {/* PRICING ARCHITECTURE */}
           <div className="mb-10 grid grid-cols-2 gap-4">
             <button 
               onClick={() => handleModeSwitch('RETAIL')}
@@ -164,9 +160,7 @@ export default function ProductDetailClient({ product }: { product: any }) {
             </button>
           </div>
 
-          {/* CONFIGURATION VECTOR */}
           <div className="space-y-10 mb-12">
-            {/* COLOR SELECTION */}
             <div>
               <p className="text-[10px] font-black text-gray-500 uppercase mb-4 tracking-widest flex items-center gap-2">
                 <Tag size={12} /> Color Variant
@@ -188,7 +182,6 @@ export default function ProductDetailClient({ product }: { product: any }) {
               </div>
             </div>
 
-            {/* SIZE SELECTION */}
             {product.sizes && product.sizes.length > 0 && (
               <div>
                 <p className="text-[10px] font-black text-gray-500 uppercase mb-4 tracking-widest flex items-center gap-2">
@@ -212,7 +205,6 @@ export default function ProductDetailClient({ product }: { product: any }) {
               </div>
             )}
 
-            {/* QUANTITY CONTROL */}
             <div>
               <p className="text-[10px] font-black text-gray-500 uppercase mb-4 tracking-widest">Quantity Vector</p>
               <div className="flex items-center gap-6 bg-white/5 w-max rounded-2xl px-6 py-3 border border-white/5">
@@ -233,7 +225,6 @@ export default function ProductDetailClient({ product }: { product: any }) {
             </div>
           </div>
 
-          {/* FINAL ACQUISITION ACTION */}
           <div className="space-y-4">
             <button
               onClick={handleAddToCart}
@@ -249,7 +240,6 @@ export default function ProductDetailClient({ product }: { product: any }) {
               </div>
             </button>
 
-            {/* TRUST INDICATORS */}
             <div className="flex justify-between items-center px-4 pt-2">
               <div className="flex items-center gap-2 text-[10px] font-black text-gray-600 uppercase tracking-widest">
                 <ShieldCheck size={14} className="text-purple-500" /> Internal Logistics
