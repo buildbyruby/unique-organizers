@@ -1,58 +1,49 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+/**
+ * UNIQUE ORGANIZERS - API TRACKING ROUTE (v16.0)
+ * Path: src/app/api/orders/track/[link]/route.ts
+ */
+
 export async function GET(
-  request: Request,
-  { params }: { params: { link: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ link: string }> } // NEXT.js 16 REQUIREMENT: MUST BE A PROMISE
 ) {
   try {
-    const { link } = params;
+    // 1. You MUST await the params before accessing properties
+    const resolvedParams = await params;
+    const link = resolvedParams.link;
 
-    // 1. Safety check for the parameter
     if (!link) {
       return NextResponse.json(
-        { success: false, error: "Tracking node identifier is required" },
+        { success: false, error: "Missing tracking link" },
         { status: 400 }
       );
     }
 
-    // 2. Query the database using the uniqueOrderLink
+    // 2. Fetch order data
     const order = await prisma.order.findUnique({
-      where: { 
-        uniqueOrderLink: link 
-      },
+      where: { uniqueOrderLink: link },
       include: {
-        // We include the items and nested product details to display the asset summary
-        items: {
-          include: { 
-            product: true 
-          }
-        },
-        // Including basic user info just in case you need it for the UI later
-        user: {
-          select: {
-            name: true,
-            email: true
-          }
-        }
+        user: { select: { name: true, email: true } },
+        items: { include: { product: true } }
       }
     });
 
-    // 3. Handle expired or invalid links
     if (!order) {
       return NextResponse.json(
-        { success: false, error: "Transmission not found or link expired" },
+        { success: false, error: "Order not found" },
         { status: 404 }
       );
     }
 
-    // 4. Return the full order payload to the client
-    return NextResponse.json(order);
+    return NextResponse.json({ success: true, data: order });
 
   } catch (error) {
-    console.error("Tracking API Error:", error);
+    console.error("API_TRACK_ERROR:", error);
     return NextResponse.json(
-      { success: false, error: "Internal Server Error during decryption" },
+      { success: false, error: "Internal Server Error" },
       { status: 500 }
     );
   }

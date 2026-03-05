@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       where: { id: existingOrder.id },
       data: {
         paymentStatus: 'SUCCESS',
-        status: 'PROCESSING' // Or 'PAID' depending on your logic
+        status: 'CONFIRMED' // Changed from 'PROCESSING' to match your Prisma Enum
       }
     });
 

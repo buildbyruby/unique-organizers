@@ -94,7 +94,10 @@ export async function addProduct(formData: FormData) {
       data: {
         name: formData.get("name") as string,
         description: formData.get("description") as string,
-        category: formData.get("category") as string,
+        // FIX: Connect the relation correctly via ID
+        category: {
+          connect: { id: formData.get("category") as string }
+        },
         retailPrice: parseFloat(formData.get("retailPrice") as string),
         wholesalePrice: parseFloat(formData.get("wholesalePrice") as string) || 0,
         stock: parseInt(formData.get("stock") as string) || 0,

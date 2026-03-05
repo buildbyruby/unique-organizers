@@ -48,7 +48,8 @@ export default function NewProductPage() {
           </div>
         </div>
 
-        <form action={upsertProduct} className="space-y-6" encType="multipart/form-data">
+        {/* THE FIX: Wrapping the action to satisfy TypeScript's void requirement */}
+        <form action={async (formData) => { await upsertProduct(formData); }} className="space-y-6" encType="multipart/form-data">
           <div className="bg-[#0a0a0c] border border-white/5 p-6 md:p-10 rounded-[2.5rem] space-y-8 shadow-2xl">
             
             {/* Basic Info */}

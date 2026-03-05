@@ -1,7 +1,10 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { Package, Heart, ShoppingCart, MessageSquare, ChevronRight, ShoppingBag, User, Truck, LogOut, ArrowRight } from 'lucide-react'
+import { 
+  Package, Heart, ShoppingCart, MessageSquare, ChevronRight, 
+  ShoppingBag, User, Truck, LogOut, ArrowRight, Trash2 
+} from 'lucide-react'
 import Link from 'next/link'
 import { getClientPortalData, logout, removeFromCart, toggleWishlist } from '@/app/actions'
 
@@ -27,7 +30,7 @@ export default function ClientPortal() {
     
     const WHATSAPP_NUMBER = "254700000000"; // Ensure this is your actual number
     
-    // 1. Build the manifest of all items
+    // 1. Build the manifestation of all items
     const cartManifest = data.cart.map((item: any) => 
       `• ${item.product.name} | Qty: ${item.quantity} | KSh ${item.product.retailPrice.toLocaleString()}`
     ).join('\n');

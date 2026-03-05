@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { initiateSTKPush } from "@/app/actions";
+// FIX: Updated import path to locate the function in the register directory
+import { initiateSTKPush } from "@/app/register/actions";
 
 export default function PaymentForm() {
   const [phone, setPhone] = useState("");

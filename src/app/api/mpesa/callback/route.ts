@@ -20,7 +20,7 @@ export async function POST(req: Request) {
         },
         data: {
           paymentStatus: 'SUCCESS',
-          status: 'PROCESSING', // Move to processing stage
+          status: 'CONFIRMED', // FIX: Changed from 'PROCESSING' to match your Prisma Enum
         }
       });
       console.log(`✅ Payment Success for ID: ${checkoutRequestID}`);

@@ -2,27 +2,31 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { trackAdvertEngagement } from "@/app/actions";
+// FIX: Changed trackAdvertEngagement to trackEngagement to match your exported action
+import { trackEngagement } from "@/app/actions";
 
 export default function HeroCarousel({ adverts }: { adverts: any[] }) {
   const [index, setIndex] = useState(0);
 
   // Objective 1: Track Impression on slide change
   useEffect(() => {
-    if (adverts.length > 0) {
-      trackAdvertEngagement(adverts[index].id, "impression");
+    if (adverts && adverts.length > 0) {
+      // FIX: Using trackEngagement
+      trackEngagement(adverts[index].id, "impression");
     }
   }, [index, adverts]);
 
   // Auto-slide logic
   useEffect(() => {
+    if (!adverts || adverts.length === 0) return;
+    
     const timer = setInterval(() => {
       setIndex((prev) => (prev + 1) % adverts.length);
     }, (adverts[index]?.duration || 5) * 1000);
     return () => clearInterval(timer);
   }, [index, adverts]);
 
-  if (!adverts.length) return null;
+  if (!adverts || !adverts.length) return null;
 
   return (
     <div className="relative w-full aspect-[21/9] overflow-hidden bg-gray-900">
@@ -35,7 +39,11 @@ export default function HeroCarousel({ adverts }: { adverts: any[] }) {
           transition={{ duration: 0.8 }}
           className="absolute inset-0"
         >
-          <img src={adverts[index].imageUrl} className="w-full h-full object-cover" alt={adverts[index].title} />
+          <img 
+            src={adverts[index].imageUrl} 
+            className="w-full h-full object-cover" 
+            alt={adverts[index].title} 
+          />
           <div className="absolute inset-0 bg-black/30 flex items-center p-12">
             <div className="text-white max-w-xl">
               <h2 className="text-4xl font-bold mb-4">{adverts[index].title}</h2>
@@ -43,7 +51,8 @@ export default function HeroCarousel({ adverts }: { adverts: any[] }) {
               {adverts[index].link && (
                 <a 
                   href={adverts[index].link}
-                  onClick={() => trackAdvertEngagement(adverts[index].id, "click")}
+                  // FIX: Using trackEngagement
+                  onClick={() => trackEngagement(adverts[index].id, "click")}
                   className="bg-orange-500 px-8 py-3 rounded-full font-bold"
                 >
                   Shop Now

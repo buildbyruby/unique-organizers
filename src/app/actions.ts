@@ -43,7 +43,6 @@ async function uploadToCloudinary(file: File, resourceType: "image" | "video"): 
 }
 
 // --- HELPER: SEAMLESS GUEST ENGINE ---
-// This guarantees every user (even guests) gets an ID so Wishlists/Orders NEVER crash
 async function ensureAuthSession(): Promise<string> {
   const token = (await cookies()).get("auth_token")?.value;
   
@@ -54,11 +53,10 @@ async function ensureAuthSession(): Promise<string> {
       const user = await prisma.user.findUnique({ where: { id: payload.userId as string } });
       if (user) return user.id;
     } catch (e) {
-      // Token invalid/expired, fall through to create a new guest session
+      // Token invalid or expired
     }
   }
 
-  // Create an invisible Guest account
   const guestId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
   const dummyEmail = `${guestId}@guest.unique.com`;
   const hashedPassword = await bcrypt.hash(guestId, 10); 
@@ -72,10 +70,9 @@ async function ensureAuthSession(): Promise<string> {
     }
   });
 
-  // Drop cookie seamlessly
   const newToken = await new SignJWT({ userId: user.id, role: user.role })
     .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("30d") // Guest sessions last 30 days
+    .setExpirationTime("30d")
     .sign(SECRET);
 
   (await cookies()).set("auth_token", newToken, { httpOnly: true, secure: true, sameSite: "lax" });
@@ -258,6 +255,11 @@ export async function signup(formData: FormData): Promise<ActionResponse> {
   return { success: true, message: "ACCOUNT_CREATED" };
 }
 
+// FIX: Added missing registerUser export for src/app/register/page.tsx
+export async function registerUser(formData: FormData): Promise<ActionResponse> {
+  return await signup(formData);
+}
+
 export async function logout() {
   (await cookies()).delete("auth_token");
   revalidatePath("/");
@@ -336,6 +338,20 @@ export async function upsertProduct(formData: FormData): Promise<ActionResponse>
   }
 }
 
+// FIX: Added missing deleteProduct export for src/app/admin/dashboard/page.tsx
+export async function deleteProduct(id: string): Promise<ActionResponse> {
+  try {
+    await prisma.product.delete({ where: { id } });
+    revalidatePath("/");
+    revalidatePath("/admin");
+    revalidatePath("/admin/dashboard");
+    return { success: true, message: "PRODUCT_DELETED" };
+  } catch (error) {
+    console.error("DELETE_PRODUCT_ERROR:", error);
+    return { success: false, message: "DELETE_FAILED" };
+  }
+}
+
 // --- 5. CLIENT PORTAL & CART ---
 export async function getClientPortalData() {
   const token = (await cookies()).get("auth_token")?.value;
@@ -392,7 +408,6 @@ export async function removeFromCart(cartItemId: string): Promise<ActionResponse
 // --- 6. WISHLIST ENGINE (SEAMLESS GUEST SUPPORT) ---
 export async function toggleWishlist(productId: string): Promise<ActionResponse> {
   try {
-    // This instantly creates a valid background user if one doesn't exist
     const userId = await ensureAuthSession();
     
     if (userId === "ADMIN_BYPASS_2026") {
@@ -420,10 +435,8 @@ export async function toggleWishlist(productId: string): Promise<ActionResponse>
 // --- 7. CHECKOUT & ORDERS (SEAMLESS GUEST SUPPORT) ---
 export async function initiateOrder(items: any[], phone: string, total: number, clientName?: string): Promise<ActionResponse> {
   try {
-    // Generate or fetch session for tracking
     const userId = await ensureAuthSession();
 
-    // If they provided a name during checkout and it's a guest account, update the DB with their real name
     if (userId !== "ADMIN_BYPASS_2026" && clientName) {
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (user && user.name === "Guest Client") {

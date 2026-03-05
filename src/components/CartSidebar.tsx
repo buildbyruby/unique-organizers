@@ -77,7 +77,8 @@ export default function CartSidebar() {
                       {item.quantity} x KSh {item.price.toLocaleString()}
                     </p>
                     <button 
-                      onClick={() => removeFromCart(item.id, item.color, item.pricingTier, item.size)}
+                      // FIX: Pass only the id to match the removeFromCart signature in CartContext
+                      onClick={() => removeFromCart(item.id)}
                       className="text-slate-300 hover:text-red-500 transition-colors p-1"
                       title="Remove Item"
                     >

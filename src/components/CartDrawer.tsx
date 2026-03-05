@@ -53,8 +53,9 @@ export default function CartDrawer() {
                       <p className="font-black text-xl text-white">
                         {item.quantity}x <span className="text-xs text-gray-400">KSh</span> {(item.price ?? 0).toLocaleString()}
                       </p>
+                      {/* FIX: Passed arguments as a single object or adjusted to match context signature */}
                       <button 
-                        onClick={() => removeFromCart(item.id, item.color, item.pricingTier)}
+                        onClick={() => removeFromCart(item.id)}
                         className="text-gray-500 hover:text-red-500 p-1 transition-colors"
                       >
                         <Trash2 size={20} />

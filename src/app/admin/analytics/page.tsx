@@ -7,19 +7,33 @@ import {
 
 export const dynamic = 'force-dynamic'
 
+// Define the interface so TypeScript understands the 'data' structure
+interface AnalyticsData {
+  users: number;
+  orders: number;
+  visits: number;
+  revenue: number;
+  topProducts: Array<{ name: string; clicks: number }>;
+  adStats: Array<{ title: string; clicks: number; impressions: number }>;
+}
+
 export default async function AnalyticsPage() {
-  const stats = await getDetailedAnalytics();
+  const response = await getDetailedAnalytics();
   
-  // Safe Fallbacks to guarantee zero errors
-  const visits = stats?.visits || 1; 
-  const orders = stats?.orders || 0;
-  const revenue = stats?.revenue || 0;
-  const topProducts = stats?.topProducts || [];
-  const adStats = stats?.adStats || [];
-  const users = stats?.users || 0;
+  // Extract the data safely from the ActionResponse
+  // We cast it to our interface to satisfy the compiler
+  const stats = response.success ? (response.data as AnalyticsData) : null;
+  
+  // Safe Fallbacks using the extracted stats
+  const visits = stats?.visits ?? 1; 
+  const orders = stats?.orders ?? 0;
+  const revenue = stats?.revenue ?? 0;
+  const topProducts = stats?.topProducts ?? [];
+  const adStats = stats?.adStats ?? [];
+  const users = stats?.users ?? 0;
 
   // Calculate specific KPIs safely
-  const conversionRate = ((orders / visits) * 100).toFixed(2);
+  const conversionRate = ((orders / (visits || 1)) * 100).toFixed(2);
   const totalRevenue = revenue.toLocaleString();
   
   return (
@@ -63,8 +77,8 @@ export default async function AnalyticsPage() {
                   <kpi.icon size={20} className={kpi.color} />
                 </div>
                 <div className="flex flex-col items-end">
-                  <span className={`text-[10px] font-black ${kpi.trend.startsWith('+') ? 'text-green-500' : 'text-red-500'} flex items-center gap-1`}>
-                    {kpi.trend} {kpi.trend.startsWith('+') ? <ArrowUpRight size={12}/> : <ArrowDownRight size={12}/>}
+                  <span className={`text-[10px] font-black ${String(kpi.trend).startsWith('+') ? 'text-green-500' : 'text-red-500'} flex items-center gap-1`}>
+                    {kpi.trend} {String(kpi.trend).startsWith('+') ? <ArrowUpRight size={12}/> : <ArrowDownRight size={12}/>}
                   </span>
                   <p className="text-[8px] text-gray-600 font-bold uppercase mt-1">vs Last 7d</p>
                 </div>

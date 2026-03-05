@@ -1,74 +1,85 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+import * as dotenv from 'dotenv';
+import path from 'path';
 
-const WORLD_CATEGORIES = [
-  {
-    name: "Electronics",
-    subs: ["Smartphones", "Laptops", "Audio & Headphones", "Cameras", "Smart Home", "Gaming Consoles", "Wearables", "Components"]
-  },
-  {
-    name: "Kitchen & Dining",
-    subs: ["Small Appliances", "Cookware", "Bakeware", "Dining & Entertaining", "Kitchen Storage", "Cutlery"]
-  },
-  {
-    name: "Home Decor",
-    subs: ["Lighting", "Wall Art", "Cushions & Throws", "Rugs", "Furniture", "Bed & Bath", "Garden"]
-  },
-  {
-    name: "Beauty & Personal Care",
-    subs: ["Skincare", "Makeup", "Hair Care", "Fragrance", "Oral Care", "Tools & Accessories", "Men's Grooming"]
-  },
-  {
-    name: "Fashion & Apparel",
-    subs: ["Men's Fashion", "Women's Fashion", "Kids & Baby", "Shoes", "Jewelry", "Watches", "Activewear"]
-  },
-  {
-    name: "Health & Wellness",
-    subs: ["Supplements", "Fitness Equipment", "Yoga & Meditation", "Personal Care", "Massage Tools"]
-  },
-  {
-    name: "Sports & Outdoors",
-    subs: ["Camping & Hiking", "Cycling", "Exercise & Fitness", "Water Sports", "Team Sports", "Outdoor Clothing"]
-  },
-  {
-    name: "Industrial & Tools",
-    subs: ["Power Tools", "Hand Tools", "Safety Gear", "Gardening", "Hardware", "Measurement Tools"]
-  },
-  {
-    name: "Grocery & Gourmet",
-    subs: ["Beverages", "Snacks", "Pantry Staples", "Baking", "Organic & Health", "Tea & Coffee"]
-  }
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
+const dbUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
+
+if (!dbUrl) {
+  console.error("❌ FATAL: DATABASE_URL is missing from .env");
+  process.exit(1);
+}
+
+const pool = new Pool({ connectionString: dbUrl });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
+
+const UNIQUE_ORGANIZERS_CATALOG = [
+  { id: "KITCHEN", name: "Kitchen & Dining", subs: ["Small Appliances","Storage & Organizers","Cookware","Plates & Dining","Cutlery","Lighting","Barware","Tea & Coffee Gear"] },
+  { id: "HOME_LIVING", name: "Home & Living", subs: ["Decor","Furniture","Rugs","Bedding","Cushions","Candles & Scents","Curtains","Wall Art","Mirrors"] },
+  { id: "GIFTS", name: "Gifts & Occasions", subs: ["Corporate","Birthday","Wedding","Luxury Hampers","Anniversary","Baby Shower","Seasonal","Greeting Cards"] },
+  { id: "ELECTRONICS", name: "Electronics", subs: ["Audio","Gadgets","Smart Home","Office Gear","Photography","Wearables","Gaming","Power & Cables"] },
+  { id: "CLOTHING", name: "Clothing & Apparel", subs: ["Men","Women","Kids","Accessories","Footwear","Activewear","Sleepwear","Outerwear"] },
+  { id: "BEAUTY", name: "Beauty & Personal Care", subs: ["Skincare","Makeup","Fragrance","Haircare","Men's Grooming","Beauty Tools","Bath & Body","Oral Care"] },
+  { id: "GROCERY", name: "Grocery & Food", subs: ["Dry Goods","Beverages","Spices","Snacks","Coffee & Tea","Organic","Condiments","Baking Essentials"] },
+  { id: "SPORTS", name: "Sports & Fitness", subs: ["Fitness","Camping","Cycling","Swimming","Team Sports","Active Gear","Yoga & Meditation"] },
+  { id: "TOYS", name: "Toys & Baby", subs: ["Educational", "Plush", "Baby Gear", "Games", "Outdoor Play", "Building Sets", "Puzzles"] },
+  { id: "OFFICE", name: "Office Supplies", subs: ["Stationery","Desk Organizers","Tech Accessories","Writing Tools","Paper Products","Filing & Storage"] },
+  { id: "HEALTH", name: "Health & Wellness", subs: ["Supplements","Personal Care","Yoga & Meditation","Massagers","Aromatherapy","Fitness Trackers"] }
 ];
 
 async function main() {
-  console.log("Cleaning Database...");
-  await prisma.category.deleteMany();
+  console.log("🚀 Starting database seed...");
 
-  console.log("Seeding All Global Categories...");
-
-  for (const cat of WORLD_CATEGORIES) {
-    const parent = await prisma.category.create({
-      data: { name: cat.name }
-    });
-
-    for (const subName of cat.subs) {
-      await prisma.category.create({
-        data: {
-          name: subName,
-          parentId: parent.id
-        }
-      });
+  try {
+    console.log("🧹 Cleaning old data...");
+    // @ts-ignore
+    if (prisma.product) {
+        // @ts-ignore
+        await prisma.product.deleteMany();
+        console.log("✅ Products cleared");
     }
-  }
 
-  console.log("Seeding Successful.");
+    await prisma.category.deleteMany();
+    console.log("✅ Categories cleared");
+
+    for (const cat of UNIQUE_ORGANIZERS_CATALOG) {
+      // Use upsert for parents
+      const parent = await prisma.category.upsert({
+        where: { id: cat.id },
+        update: { name: cat.name },
+        create: { id: cat.id, name: cat.name }
+      });
+      console.log(`✅ Processed Parent: ${parent.name}`);
+
+      for (const subName of cat.subs) {
+        const subId = subName.toUpperCase()
+          .replace(/ & /g, '_')
+          .replace(/ /g, '_')
+          .replace(/'/g, '');
+
+        // Use upsert for sub-categories to handle duplicates like YOGA_MEDITATION
+        await prisma.category.upsert({
+          where: { id: subId },
+          update: { name: subName, parentId: parent.id },
+          create: {
+            id: subId,
+            name: subName,
+            parentId: parent.id
+          }
+        });
+      }
+    }
+    console.log("🏁 Seeding complete! Go grab a coffee, you earned it.");
+  } catch (e) {
+    console.error("❌ Seed error:", e);
+    process.exit(1);
+  }
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .catch((e) => { console.error(e); process.exit(1); }) 
+  .finally(async () => { await prisma.$disconnect(); });

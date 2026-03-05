@@ -12,7 +12,7 @@ export default async function OrderTrackingPage({ params }: { params: { id: stri
 
   const steps = [
     { label: 'Order Received', status: 'PENDING', icon: <Clock /> },
-    { label: 'Processing', status: 'PROCESSING', icon: <Package /> },
+    { label: 'Confirmed', status: 'CONFIRMED', icon: <Package /> },
     { label: 'In Transit', status: 'SHIPPED', icon: <Truck /> },
     { label: 'Delivered', status: 'DELIVERED', icon: <CheckCircle2 /> }
   ]
@@ -36,7 +36,9 @@ export default async function OrderTrackingPage({ params }: { params: { id: stri
         {/* TRACKING TIMELINE */}
         <div className="grid md:grid-cols-4 gap-4">
           {steps.map((step, i) => {
-            const isCompleted = order.trackingTimeline.some((t: any) => t.status === step.status)
+            // FIX: Use optional chaining (?.) and fallback to empty array (|| []) to prevent 'possibly null' error
+            const isCompleted = (order.trackingTimeline as any[] || []).some((t: any) => t.status === step.status)
+            
             return (
               <div key={step.label} className={`p-8 rounded-[2rem] border transition-all ${isCompleted ? 'bg-white text-black border-white' : 'bg-white/5 border-white/10 text-gray-600'}`}>
                 <div className="mb-4">{step.icon}</div>

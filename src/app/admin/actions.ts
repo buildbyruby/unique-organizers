@@ -242,7 +242,6 @@ export async function upsertProduct(formData: FormData): Promise<ActionResponse>
   try {
     const id = formData.get("id") as string;
     
-    // IMAGE LOGIC: Capture multiple fields and robustly handle new uploads
     const fileField = formData.getAll("images") as File[];
     const singleFile = formData.get("image") as File;
     const newFiles = [...fileField, singleFile].filter(f => f && f instanceof File && f.size > 0);
@@ -252,21 +251,22 @@ export async function upsertProduct(formData: FormData): Promise<ActionResponse>
       newImageUrls = await Promise.all(newFiles.map(file => uploadToCloudinary(file, "image")));
     }
 
-    // Merge with existing images and ensure clean array formatting
     const existingImagesStr = formData.get("existingImages")?.toString();
     const existingImages = existingImagesStr ? existingImagesStr.split(',').filter(Boolean) : [];
     let finalImages = [...existingImages, ...newImageUrls];
 
-    // CRITICAL FIX: If no images provided at all but updating, fetch current DB images to prevent blank squares
     if (finalImages.length === 0 && id && id !== "null" && id !== "") {
         const current = await prisma.product.findUnique({ where: { id }, select: { images: true } });
         if (current?.images) finalImages = current.images as string[];
     }
 
+    const categoryId = formData.get("category") as string;
+
     const data: any = {
       name: (formData.get("name") as string)?.trim(),
       description: formData.get("description") as string,
-      category: formData.get("category") as string,
+      // FIX: Use connect syntax for Relation
+      category: { connect: { id: categoryId } },
       subCategory: formData.get("subCategory") as string || "",
       retailPrice: parseFloat((formData.get("retailPrice") as string || "0").replace(/,/g, '')),
       wholesalePrice: parseFloat((formData.get("wholesalePrice") as string || "0").replace(/,/g, '')) || 0,
@@ -321,16 +321,23 @@ export async function toggleProductStock(productId: string, isOpen: boolean): Pr
   }
 }
 
-export async function updateProductCategory(productId: string, category: string): Promise<ActionResponse> {
+// FIXED FUNCTION BELOW
+export async function updateProductCategory(productId: string, categoryId: string): Promise<ActionResponse> {
   try {
     await prisma.product.update({
       where: { id: productId },
-      data: { category }
+      data: { 
+        // FIX: Connect to the relation via ID instead of passing a string
+        category: {
+          connect: { id: categoryId }
+        }
+      }
     });
     revalidatePath("/");
     revalidatePath("/admin/products");
     return { success: true, message: "CATEGORY_UPDATED" };
   } catch (error) {
+    console.error("CATEGORY_UPDATE_ERROR:", error);
     return { success: false, message: "CATEGORY_UPDATE_FAILED" };
   }
 }
