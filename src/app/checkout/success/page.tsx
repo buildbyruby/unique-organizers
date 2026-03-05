@@ -1,7 +1,14 @@
 import Link from 'next/link'
 import { CheckCircle, ArrowRight, Package } from 'lucide-react'
 
-export default function SuccessPage({ searchParams }: { searchParams: { ref: string } }) {
+export default async function SuccessPage({ 
+  searchParams 
+}: { 
+  searchParams: Promise<{ ref: string }> 
+}) {
+  // Await the searchParams promise to get the actual values
+  const { ref } = await searchParams;
+
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-8 font-sans">
       <div className="max-w-md w-full text-center space-y-8">
@@ -12,7 +19,7 @@ export default function SuccessPage({ searchParams }: { searchParams: { ref: str
         
         <div className="space-y-2">
             <h1 className="text-4xl font-black uppercase tracking-tighter">Order Logged</h1>
-            <p className="text-gray-500 text-sm font-medium uppercase tracking-widest">Reference: {searchParams.ref}</p>
+            <p className="text-gray-500 text-sm font-medium uppercase tracking-widest">Reference: {ref}</p>
         </div>
 
         <div className="bg-[#0a0a0c] border border-white/5 rounded-3xl p-8 space-y-4">

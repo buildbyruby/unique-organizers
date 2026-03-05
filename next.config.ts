@@ -1,10 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* No changes to dev origins */
-  allowedDevOrigins: ['*.replit.dev', '*.spock.replit.dev', '*.repl.co', '*.picard.replit.dev'],
+  // We removed output: 'standalone' because Vercel doesn't need it
+  // and it's what was crashing the middleware trace.
+  
+  serverExternalPackages: ['@prisma/client', 'pg'],
+
   images: {
-    unoptimized: true, // This is the "Safety Switch" to prevent black boxes
+    unoptimized: true,
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },

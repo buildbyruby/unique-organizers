@@ -1,11 +1,9 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  
 }
 
 model User {
@@ -18,6 +16,7 @@ model User {
   deliveries       Order[]     @relation("DeliveryAssignments")
   wishlist         Wishlist[]
   cart             CartItem[]
+  
   messagesSent     Message[]   @relation("SentMessages")
   messagesReceived Message[]   @relation("ReceivedMessages")
   analytics        Analytics[]
@@ -29,7 +28,6 @@ model Category {
   id          String     @id @default(cuid())
   name        String     @unique
   description String?
-  
   // Recursive relation for subcategories
   parentId    String?
   parent      Category?  @relation("SubCategories", fields: [parentId], references: [id])
@@ -45,7 +43,7 @@ model Product {
   name                String
   description         String
   categoryDescription String?
-  subCategory         String?     // 🔥 FIXED: Added this field to match your code
+  subCategory         String?
   retailPrice         Float
   wholesalePrice      Float
   discountPrice       Float?
