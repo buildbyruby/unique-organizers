@@ -46,13 +46,29 @@ export default async function HomePage(props: {
   const subCategory = searchParams.sub;
   const query = searchParams.q;
 
-  // --- 2. OPTIMIZED FETCHING (HIDES CLOSED STOCK) ---
+  // --- 2. FETCHING LOGIC (REPAIRED) ---
   const products = await prisma.product.findMany({
     where: {
       AND: [
-        { isStockOpen: true }, // ONLY SHOW ACTIVE INVENTORY
-        category ? { category: category } : {},
-        subCategory ? { subCategory: subCategory } : {},
+        { isStockOpen: true }, // Always ensure we only show open stock
+        
+        // Filter by Main Category (matches either ID or Name)
+        category ? { 
+          OR: [
+            { categoryId: category },
+            { category: { name: category } }
+          ] 
+        } : {},
+
+        // Filter by Subcategory (Matches the 'subCategory' column in your Product table)
+        subCategory ? { 
+          subCategory: { 
+            equals: subCategory, 
+            mode: 'insensitive' // Prevents "Plush" vs "plush" mismatch issues
+          } 
+        } : {},
+
+        // Handle Search
         query ? { 
           OR: [
             { name: { contains: query, mode: 'insensitive' } },
@@ -61,37 +77,98 @@ export default async function HomePage(props: {
         } : {}
       ]
     },
+    include: {
+      category: true 
+    },
     orderBy: { createdAt: 'desc' }
   });
 
   // Fetch Public Reviews
   const reviews = await prisma.review.findMany({
+    where: { isApproved: true },
     orderBy: { createdAt: 'desc' },
     take: 6
   });
 
-  // --- 3. FETCH ACTIVE ADVERTS (MOD 6) ---
+  // Fetch Active Adverts
   const activeAdverts = await prisma.advert.findMany({
     where: { isActive: true },
     orderBy: { priority: 'desc' },
-    take: 1 // Showing the highest priority banner on the homepage
+    take: 1
   });
 
-  // --- 4. CATEGORIES DATA ---
+  // --- 3. CATEGORIES DATA ---
   const categoriesData = [
-    { id: "KITCHEN", name: "Kitchen & Dining", image: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&q=80&w=600", subs: ["Lighting", "Storage & Organizers", "Home Accessories", "Cookware", "Plates & Dining"] },
-    { id: "HOME_LIVING", name: "Home & Living", image: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&q=80&w=600", subs: ["Decor", "Furniture", "Rugs", "Bedding"] },
-    { id: "GIFTS", name: "Gifts & Occasions", image: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&q=80&w=600", subs: ["Corporate", "Birthday", "Wedding", "Luxury Hampers"] },
-    { id: "ELECTRONICS", name: "Electronics", image: "https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&q=80&w=600", subs: ["Audio", "Gadgets", "Smart Home", "Office Gear"] },
-    { id: "CLOTHING", name: "Clothing & Apparel", image: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=600", subs: ["Men", "Women", "Kids", "Accessories"] },
-    { id: "BEAUTY", name: "Beauty & Personal Care", image: "https://images.unsplash.com/photo-1596462502278-27bfdc4033c8?auto=format&fit=crop&q=80&w=600", subs: ["Skincare", "Makeup", "Fragrance"] },
-    { id: "GROCERY", name: "Grocery & Food", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=600", subs: ["Dry Goods", "Beverages", "Spices"] },
-    { id: "TOOLS", name: "Tools & Hardware", image: "https://images.unsplash.com/photo-1581147036324-c17ac41dfa6c?auto=format&fit=crop&q=80&w=600", subs: ["Hand Tools", "Power Tools", "Organizers"] }
+    { 
+      id: "KITCHEN", 
+      name: "Kitchen & Dining", 
+      image: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&q=80&w=600", 
+      subs: ["Small Appliances","Storage & Organizers","Cookware","Plates & Dining","Cutlery","Lighting","Barware","Tea & Coffee Gear"] 
+    },
+    { 
+      id: "HOME_LIVING", 
+      name: "Home & Living", 
+      image: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&q=80&w=600", 
+      subs: ["Decor","Furniture","Rugs","Bedding","Cushions","Candles & Scents","Curtains","Wall Art","Mirrors"] 
+    },
+    { 
+      id: "GIFTS", 
+      name: "Gifts & Occasions", 
+      image: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&q=80&w=600", 
+      subs: ["Corporate","Birthday","Wedding","Luxury Hampers","Anniversary","Baby Shower","Seasonal","Greeting Cards"] 
+    },
+    { 
+      id: "ELECTRONICS", 
+      name: "Electronics", 
+      image: "https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&q=80&w=600", 
+      subs: ["Audio","Gadgets","Smart Home","Office Gear","Photography","Wearables","Gaming","Power & Cables"] 
+    },
+    { 
+      id: "CLOTHING", 
+      name: "Clothing & Apparel", 
+      image: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=600", 
+      subs: ["Men","Women","Kids","Accessories","Footwear","Activewear","Sleepwear","Outerwear"] 
+    },
+    { 
+      id: "BEAUTY", 
+      name: "Beauty & Personal Care", 
+      image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&q=80&w=600", 
+      subs: ["Skincare","Makeup","Fragrance","Haircare","Men's Grooming","Beauty Tools","Bath & Body","Oral Care"] 
+    },
+    { 
+      id: "GROCERY", 
+      name: "Grocery & Food", 
+      image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=600", 
+      subs: ["Dry Goods","Beverages","Spices","Snacks","Coffee & Tea","Organic","Condiments","Baking Essentials"] 
+    },
+    { 
+      id: "SPORTS", 
+      name: "Sports & Fitness", 
+      image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=600", 
+      subs: ["Fitness","Camping","Cycling","Swimming","Team Sports","Active Gear","Yoga & Meditation"] 
+    },
+    {
+  id: "TOYS", 
+  name: "Toys & Baby", 
+  image: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&q=80&w=600", 
+  subs: ["Educational", "Plush", "Baby Gear", "Games", "Outdoor Play", "Building Sets", "Puzzles"] 
+},
+    { 
+      id: "OFFICE", 
+      name: "Office Supplies", 
+      image: "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&q=80&w=600", 
+      subs: ["Stationery","Desk Organizers","Tech Accessories","Writing Tools","Paper Products","Filing & Storage"] 
+    },
+    { 
+      id: "HEALTH", 
+      name: "Health & Wellness", 
+      image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&q=80&w=600", 
+      subs: ["Supplements","Personal Care","Yoga & Meditation","Massagers","Aromatherapy","Fitness Trackers"] 
+    }
   ];
 
   return (
     <div suppressHydrationWarning className="min-h-screen bg-[#F8F9FA] text-slate-900 selection:bg-purple-300/50 font-sans antialiased overflow-x-hidden relative">
-      {/* --- WHATSAPP FLOATING CONTACT --- */}
       <a href="https://wa.me/254797517565" target="_blank" rel="noopener noreferrer" className="fixed bottom-8 right-8 z-[150] group flex items-center gap-3">
         <div className="bg-white/80 backdrop-blur-xl border border-white/60 px-6 py-3 rounded-2xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0 pointer-events-none">
            <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Direct WhatsApp</span>
@@ -101,7 +178,7 @@ export default async function HomePage(props: {
         </div>
       </a>
 
-      {/* --- CYBER-LUXURY AMBIENT BACKGROUND --- */}
+      {/* --- BACKGROUND EFFECTS --- */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] bg-purple-400/20 blur-[150px] rounded-full mix-blend-multiply animate-pulse" />
         <div className="absolute inset-0 bg-white/60 backdrop-blur-[80px]" />
@@ -111,6 +188,7 @@ export default async function HomePage(props: {
         <span className="text-[9px] font-black uppercase tracking-[0.25em] text-white/90">Premium Stock Arrived • 24H Rapid Dispatch Available</span>
       </div>
 
+      {/* --- NAVBAR --- */}
       <nav className="sticky top-0 w-full z-[100] backdrop-blur-2xl border-b border-white/40 bg-white/40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex justify-between items-center gap-4">
@@ -139,7 +217,7 @@ export default async function HomePage(props: {
         </div>
       </nav>
 
-      {/* --- SEARCH RESULTS HEADER --- */}
+      {/* --- SEARCH HEADER --- */}
       {query && (
         <section className="relative pt-12 md:pt-20 pb-4 px-6 z-10">
           <div className="max-w-7xl mx-auto relative w-full">
@@ -154,7 +232,7 @@ export default async function HomePage(props: {
         </section>
       )}
 
-      {/* --- ADVERT MANAGER FRONTEND (MOD 6) --- */}
+      {/* --- ADVERT SECTION --- */}
       {!query && activeAdverts.length > 0 && (
         <section className="pt-8 md:pt-12 px-4 md:px-8 relative z-10">
           <div className="max-w-7xl mx-auto">
@@ -175,7 +253,7 @@ export default async function HomePage(props: {
         </section>
       )}
 
-      {/* --- GLOBAL DEPARTMENTS (MOD 1: REORDERED TO TOP) --- */}
+      {/* --- GLOBAL DEPARTMENTS --- */}
       {!query && (
         <section className={`py-8 px-4 md:px-8 relative z-10 ${activeAdverts.length === 0 ? 'pt-12 md:pt-20' : ''}`}>
           <div className="max-w-7xl mx-auto">
@@ -230,13 +308,13 @@ export default async function HomePage(props: {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
-            {products.map((product) => (
+            {products.map((product: any) => (
               <Link key={product.id} href={`/product/${product.id}`} className="group bg-white/40 backdrop-blur-2xl rounded-[2rem] p-2 transition-all duration-700 hover:-translate-y-2 flex flex-col overflow-hidden shadow-sm hover:shadow-xl border border-white/50">
                 <div className="aspect-[4/5] rounded-[1.5rem] overflow-hidden bg-slate-100 relative shadow-inner">
                   <img src={product.images[0] || "/placeholder-product.jpg"} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                   <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
                     <div className="bg-white/90 backdrop-blur-xl px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest text-slate-900 w-fit">
-                      {product.subCategory || product.category.replace('_', ' ')}
+                      {product.category?.name || "Asset"}
                     </div>
                     {product.isDiscounted && (
                       <div className="bg-red-600 text-white px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg w-fit">
@@ -281,7 +359,7 @@ export default async function HomePage(props: {
         </div>
       </section>
 
-      {/* --- INTRO SCRIPT / WELCOME TEXT (MOD 1: REPOSITIONED LOWER) --- */}
+      {/* --- HERO / WELCOME --- */}
       {!query && (
         <section className="relative py-16 md:py-24 px-6 z-10 border-t border-slate-200 mt-8 bg-white/30 backdrop-blur-xl">
           <div className="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-16 lg:gap-8">
@@ -316,8 +394,10 @@ export default async function HomePage(props: {
         </section>
       )}
 
+      {/* --- REVIEWS --- */}
       <PublicReviews reviews={reviews} />
 
+      {/* --- SUPPORT / FEEDBACK --- */}
       <section className="py-24 md:py-32 px-6 relative overflow-hidden z-10">
         <div className="absolute inset-0 bg-white/40 backdrop-blur-[100px] border-t border-white/60" />
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center relative">
@@ -346,6 +426,7 @@ export default async function HomePage(props: {
         </div>
       </section>
 
+      {/* --- FOOTER --- */}
       <footer className="border-t border-slate-200 py-16 px-8 bg-white relative z-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="text-center md:text-left">

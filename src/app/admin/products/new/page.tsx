@@ -1,22 +1,37 @@
 'use client'
 
-import { useState } from 'react'
-import { createProduct } from '../../actions'
+import { useState, useEffect } from 'react'
+import { upsertProduct } from '../../../actions'
 import Link from 'next/link'
 import { ArrowLeft, Sparkles, Tag, CircleDollarSign, Upload, Box, Palette, Layers, Percent } from 'lucide-react'
 
-// 1. The CATEGORY_MAP Architecture
-const CATEGORY_MAP = {
-  ELECTRONICS: ['Gadgets', 'Audio', 'Smart Home', 'Computing'],
-  FURNITURE: ['Office', 'Living Room', 'Bedroom', 'Outdoor'],
-  DECOR: ['Wall Art', 'Lighting', 'Vases', 'Mirrors'],
-  KITCHEN: ['Cookware', 'Appliances', 'Cutlery', 'Storage'],
+// interface to handle the database category structure
+interface Category {
+  id: string;
+  name: string;
+  children: { id: string, name: string }[];
 }
 
-type CategoryKey = keyof typeof CATEGORY_MAP;
-
 export default function NewProductPage() {
-  const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('ELECTRONICS');
+  const [dbCategories, setDbCategories] = useState<Category[]>([]);
+  const [selectedParentId, setSelectedParentId] = useState<string>('');
+
+  // This fetches the REAL categories from your database so Admin matches Storefront
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch('/api/categories');
+        const data = await res.json();
+        setDbCategories(data);
+        if (data.length > 0) setSelectedParentId(data[0].id);
+      } catch (error) {
+        console.error("Error loading categories:", error);
+      }
+    }
+    load();
+  }, []);
+
+  const activeParent = dbCategories.find(c => c.id === selectedParentId);
 
   return (
     <div className="min-h-screen bg-[#020203] text-white p-4 md:p-8 font-sans">
@@ -33,7 +48,7 @@ export default function NewProductPage() {
           </div>
         </div>
 
-        <form action={createProduct} className="space-y-6" encType="multipart/form-data">
+        <form action={upsertProduct} className="space-y-6" encType="multipart/form-data">
           <div className="bg-[#0a0a0c] border border-white/5 p-6 md:p-10 rounded-[2.5rem] space-y-8 shadow-2xl">
             
             {/* Basic Info */}
@@ -47,7 +62,7 @@ export default function NewProductPage() {
               <textarea name="description" required rows={4} placeholder="Tell the customers about this item..." className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-sm outline-none focus:border-purple-500 transition-all" />
             </div>
 
-            {/* Pricing Matrix (The Value Matrix) */}
+            {/* Pricing Matrix */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-4 flex items-center gap-1">
@@ -78,20 +93,20 @@ export default function NewProductPage() {
               </div>
             </div>
 
-            {/* Dynamic Categorization Logic */}
+            {/* SYNCED Categorization Logic */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-4 flex items-center gap-1">
                   <Layers size={10} /> Main Category
                 </label>
                 <select 
-                  name="category" 
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value as CategoryKey)}
+                  name="parentCategory" 
+                  value={selectedParentId}
+                  onChange={(e) => setSelectedParentId(e.target.value)}
                   className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-sm font-bold outline-none cursor-pointer appearance-none hover:border-purple-500 transition-all"
                 >
-                  {Object.keys(CATEGORY_MAP).map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  {dbCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
               </div>
@@ -100,11 +115,11 @@ export default function NewProductPage() {
                   <Sparkles size={10} /> Sub-Tag
                 </label>
                 <select 
-                  name="subTag" 
+                  name="categoryId" 
                   className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-sm font-bold outline-none cursor-pointer appearance-none hover:border-purple-500 transition-all shadow-[0_0_20px_rgba(168,85,247,0.1)]"
                 >
-                  {CATEGORY_MAP[selectedCategory].map(tag => (
-                    <option key={tag} value={tag}>{tag}</option>
+                  {activeParent?.children.map(sub => (
+                    <option key={sub.id} value={sub.id}>{sub.name}</option>
                   ))}
                 </select>
               </div>

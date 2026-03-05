@@ -1,4 +1,5 @@
 "use client"
+
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { 
@@ -12,10 +13,8 @@ export default function ClientDashboard() {
   const fetchDashboardData = useCallback(async () => {
     try {
       const res = await fetch('/api/client/dashboard');
-      if (res.status === 401 || res.status === 404) {
-        window.location.href = '/login';
-        return;
-      }
+      
+      // MODIFICATION: Removed the automatic redirect to /login to support Guest view
       if (res.ok) {
         const json = await res.json();
         setData(json.data);
@@ -29,6 +28,7 @@ export default function ClientDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+    // Refresh data when window regains focus to keep order status current
     window.addEventListener('focus', fetchDashboardData);
     return () => window.removeEventListener('focus', fetchDashboardData);
   }, [fetchDashboardData]);
@@ -54,7 +54,9 @@ export default function ClientDashboard() {
     );
   }
 
-  const { user = {}, orders = [], wishlist = [] } = data || {};
+  // LOGIC: Detect if this is a seamless guest account
+  const { user = null, orders = [], wishlist = [] } = data || {};
+  const isGuest = user?.email?.includes('@guest.unique.com');
   const deliverySteps = ['PENDING', 'ASSIGNED', 'DISPATCHED', 'IN_TRANSIT', 'DELIVERED'];
 
   return (
@@ -64,9 +66,17 @@ export default function ClientDashboard() {
             <div className="w-3 h-3 bg-purple-600 rounded-full animate-pulse" />
             <h1 className="text-2xl font-black uppercase tracking-tighter italic">Client_Terminal</h1>
         </div>
-        <button onClick={handleLogout} className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:text-red-500 transition-colors">
-            Disconnect_Node <LogOut size={14} className="group-hover:translate-x-1 transition-transform" />
-        </button>
+        
+        {/* MODIFICATION: Conditional login/logout button based on auth state & guest state */}
+        {user && !isGuest ? (
+          <button onClick={handleLogout} className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:text-red-500 transition-colors">
+              Disconnect_Node <LogOut size={14} className="group-hover:translate-x-1 transition-transform" />
+          </button>
+        ) : (
+          <Link href="/login" className="text-[10px] font-black uppercase tracking-widest hover:text-purple-600 transition-colors">
+              {isGuest ? 'Upgrade_To_Full_Account' : 'Initial_Login'}
+          </Link>
+        )}
       </nav>
 
       <main className="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-8">
@@ -75,8 +85,14 @@ export default function ClientDashboard() {
             <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-white mb-6">
               <User size={30} />
             </div>
-            <h2 className="text-2xl font-black uppercase tracking-tight">{user.name || 'Anonymous_Unit'}</h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{user.email}</p>
+            
+            {/* Display "Guest Protocol" if they haven't set a name yet */}
+            <h2 className="text-2xl font-black uppercase tracking-tight">
+                {user?.name === "Guest Client" ? "Guest_Protocol" : (user?.name || "Anonymous_Unit")}
+            </h2>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                {isGuest ? 'ANONYMOUS_SESSION_ACTIVE' : (user?.email || 'OFFLINE_MODE')}
+            </p>
             
             <div className="grid grid-cols-2 gap-4 mt-8 mb-8">
               <div className="bg-slate-50 p-4 rounded-2xl">
@@ -130,20 +146,20 @@ export default function ClientDashboard() {
                           </p>
                         </div>
                       </div>
-                      <Link href={`/track/${order.uniqueOrderLink}`} className="px-8 py-4 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-purple-600 transition-colors flex items-center gap-2">
+                      
+                      <Link href={`/orders/${order.uniqueOrderLink}`} className="px-8 py-4 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-purple-600 transition-colors flex items-center gap-2">
                         Realtime_Logistics <ArrowUpRight size={14} />
                       </Link>
                     </div>
 
-                    {/* ITEMS IN THIS SHIPMENT */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                       {order.items.map((item: any) => (
                         <div key={item.id} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
                            <div className="w-10 h-10 rounded-lg overflow-hidden border">
-                              <img src={item.product?.images?.[0]} className="w-full h-full object-cover" />
+                              <img src={item.product?.images?.[0]} className="w-full h-full object-cover" alt={item.product?.name} />
                            </div>
                            <div>
-                              <p className="text-[8px] font-black uppercase truncate w-20">{item.product.name}</p>
+                              <p className="text-[8px] font-black uppercase truncate w-20">{item.product?.name}</p>
                               {item.color && (
                                 <div className="flex items-center gap-1 mt-0.5">
                                    <div className="w-2 h-2 rounded-full border border-slate-300" style={{ backgroundColor: item.color }} />
@@ -155,7 +171,6 @@ export default function ClientDashboard() {
                       ))}
                     </div>
 
-                    {/* PROGRESS TRACKER */}
                     <div className="relative pt-2">
                         <div className="w-full bg-slate-100 rounded-full h-1.5 mb-3 overflow-hidden">
                             <div className="bg-purple-600 h-1.5 rounded-full transition-all duration-1000 ease-out" style={{ width: `${progressPercentage}%` }}></div>
@@ -185,13 +200,13 @@ export default function ClientDashboard() {
               {wishlist.length > 0 ? wishlist.map((item: any) => (
                 <div key={item.id} className="bg-white p-5 rounded-[2.5rem] border border-slate-100 hover:shadow-xl transition-all group">
                   <div className="aspect-square rounded-3xl bg-slate-50 overflow-hidden mb-4 relative">
-                    <img src={item.product?.images?.[0] || 'https://placehold.co/400x400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <img src={item.product?.images?.[0] || 'https://placehold.co/400x400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={item.product?.name} />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4">
-                        <Link href={`/product/${item.product.id}`} className="w-full py-3 bg-white text-black text-[9px] font-black uppercase tracking-widest rounded-xl text-center">Open_Asset</Link>
+                        <Link href={`/product/${item.product?.id}`} className="w-full py-3 bg-white text-black text-[9px] font-black uppercase tracking-widest rounded-xl text-center">Open_Asset</Link>
                     </div>
                   </div>
-                  <h4 className="text-[10px] font-black uppercase truncate mb-1">{item.product.name}</h4>
-                  <p className="text-[10px] font-black text-purple-600 italic">KSh {item.product.retailPrice.toLocaleString()}</p>
+                  <h4 className="text-[10px] font-black uppercase truncate mb-1">{item.product?.name}</h4>
+                  <p className="text-[10px] font-black text-purple-600 italic">KSh {item.product?.retailPrice?.toLocaleString()}</p>
                 </div>
               )) : (
                 <div className="col-span-full py-10 bg-white border border-slate-100 rounded-[2.5rem] text-center shadow-sm">

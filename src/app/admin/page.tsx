@@ -147,7 +147,6 @@ export default function AdminDashboard() {
             </h3>
             
             <div className="flex flex-col gap-5">
-              {/* FIXED: Product Manager now points to /admin/dashboard */}
               <Link href="/admin/dashboard" className="group flex items-center gap-6 p-6 bg-slate-50 rounded-[2rem] border border-slate-100 hover:bg-black hover:text-white transition-all duration-300">
                 <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-sm group-hover:bg-purple-600 transition-colors shrink-0">
                   <Package size={24} className="text-purple-600 group-hover:text-white" />
@@ -205,9 +204,15 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex-1">
                       <h4 className="text-sm font-black text-black uppercase tracking-tight line-clamp-1">{product.name}</h4>
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        <span className="text-[9px] bg-slate-100 px-3 py-1 rounded-full font-black text-slate-700 uppercase border border-slate-200">{product.category}</span>
-                        <span className="text-[9px] bg-purple-50 px-3 py-1 rounded-full font-black text-purple-600 uppercase border border-purple-100">KSh {formatNumber(product.retailPrice)}</span>
+                      
+                      <div className="flex flex-col gap-1.5 mt-3">
+                        <div className="flex items-center gap-2">
+                           <span className="text-[8px] bg-slate-100 px-2 py-0.5 rounded-full font-black text-slate-500 uppercase border border-slate-200">{product.category}</span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[9px] bg-purple-50 px-3 py-1 rounded-full font-black text-purple-600 uppercase border border-purple-100 w-fit">Retail: KSh {formatNumber(product.retailPrice)}</span>
+                          <span className="text-[9px] bg-pink-50 px-3 py-1 rounded-full font-black text-pink-600 uppercase border border-pink-100 w-fit">Bulk: KSh {formatNumber(product.wholesalePrice)}</span>
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Plus, ExternalLink, Trash2, Loader2, LayoutGrid, 
-  ImagePlus, X, Tag, Edit3, RefreshCcw, MessageSquare, Star, Layers
+  ImagePlus, X, Tag, Edit3, RefreshCcw, MessageSquare, Star, Layers, AlignLeft
 } from 'lucide-react';
 import Link from 'next/link';
 import { updateProductCategory, upsertProduct, deleteProduct } from '@/app/actions';
@@ -223,7 +223,7 @@ export default function AdminDashboard() {
     if (form.id) formData.append("id", form.id);
     formData.append("name", form.name);
     formData.append("description", form.description);
-    formData.append("category", form.category);
+    formData.append("categoryId", form.category);
     formData.append("subCategory", form.subCategory);
     
     const rPrice = stripNumber(form.retailPrice);
@@ -316,6 +316,17 @@ export default function AdminDashboard() {
               <input className="w-full bg-white border border-slate-200 rounded-2xl p-5 text-sm font-bold focus:ring-2 focus:ring-purple-600 outline-none transition-all" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. Signature Velvet Hoodie" required />
             </div>
 
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">System Brief (Description)</label>
+              <textarea 
+                rows={3}
+                className="w-full bg-white border border-slate-200 rounded-2xl p-5 text-sm font-bold focus:ring-2 focus:ring-purple-600 outline-none transition-all resize-none" 
+                value={form.description} 
+                onChange={e => setForm({...form, description: e.target.value})} 
+                placeholder="Detail the specifications and elite features of this asset..." 
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">Category</label>
@@ -359,18 +370,18 @@ export default function AdminDashboard() {
                 <Layers size={14} className="text-purple-400" />
                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Value Matrix</span>
               </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="block text-[8px] font-black text-purple-300 uppercase tracking-widest text-center">Retail</label>
-                  <input type="text" value={form.retailPrice} onChange={e => setForm({...form, retailPrice: formatNumber(e.target.value)})} required className="w-full bg-white/5 border border-white/10 rounded-2xl py-6 px-4 text-center text-white font-black text-xs outline-none focus:bg-white/10 focus:border-purple-500 transition-all" />
+              <div className="space-y-5">
+                <div className="flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/10">
+                  <label className="w-16 text-[8px] font-black text-purple-300 uppercase tracking-widest">Retail</label>
+                  <input type="text" value={form.retailPrice} onChange={e => setForm({...form, retailPrice: formatNumber(e.target.value)})} required className="flex-1 bg-transparent text-white font-black text-sm outline-none" placeholder="0" />
                 </div>
-                <div className="space-y-2">
-                  <label className="block text-[8px] font-black text-pink-300 uppercase tracking-widest text-center">Bulk</label>
-                  <input type="text" value={form.wholesalePrice} onChange={e => setForm({...form, wholesalePrice: formatNumber(e.target.value)})} required className="w-full bg-white/5 border border-white/10 rounded-2xl py-6 px-4 text-center text-white font-black text-xs outline-none focus:bg-white/10 focus:border-pink-500 transition-all" />
+                <div className="flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/10">
+                  <label className="w-16 text-[8px] font-black text-pink-300 uppercase tracking-widest">Bulk</label>
+                  <input type="text" value={form.wholesalePrice} onChange={e => setForm({...form, wholesalePrice: formatNumber(e.target.value)})} required className="flex-1 bg-transparent text-white font-black text-sm outline-none" placeholder="0" />
                 </div>
-                <div className="space-y-2">
-                  <label className="block text-[8px] font-black text-emerald-300 uppercase tracking-widest text-center">Sale</label>
-                  <input type="text" value={form.discountPrice} onChange={e => setForm({...form, discountPrice: formatNumber(e.target.value)})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-6 px-4 text-center text-white font-black text-xs outline-none focus:bg-white/10 focus:border-emerald-500 transition-all" />
+                <div className="flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/10">
+                  <label className="w-16 text-[8px] font-black text-emerald-300 uppercase tracking-widest">Sale</label>
+                  <input type="text" value={form.discountPrice} onChange={e => setForm({...form, discountPrice: formatNumber(e.target.value)})} className="flex-1 bg-transparent text-white font-black text-sm outline-none" placeholder="Optional" />
                 </div>
               </div>
             </div>
@@ -480,35 +491,36 @@ export default function AdminDashboard() {
                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{product.subCategory || 'General'}</span>
                       {updatingId === product.id && <Loader2 size={10} className="animate-spin text-purple-500" />}
                     </div>
-                    <h4 className="text-lg font-black text-black uppercase italic tracking-tighter leading-none mb-4">{product.name}</h4>
+                    <h4 className="text-lg font-black text-black uppercase italic tracking-tighter leading-none mb-2">{product.name}</h4>
                     
-                    <div className="grid grid-cols-3 gap-4">
-                       <div className="flex flex-col">
-                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Stock</span>
-                         <span className="text-[11px] font-mono font-bold text-black bg-slate-50 px-2 py-1 rounded-md w-fit">{product.stock} Units</span>
+                    {/* Added Description Preview */}
+                    <p className="text-[10px] text-slate-400 font-medium mb-4 line-clamp-2 italic leading-relaxed">
+                      {product.description || "No description provided."}
+                    </p>
+                    
+                    <div className="flex flex-col gap-3">
+                       <div className="flex items-center justify-between bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Stock Units</span>
+                         <span className="text-[11px] font-black text-black">{product.stock} Units</span>
                        </div>
                        
-                       <div className="flex flex-col">
-                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Market</span>
-                          {product.isDiscounted ? (
-                            <div className="flex flex-col">
-                              <span className="text-[12px] font-black text-emerald-600 italic leading-none">
-                                KSh {Number(product.discountPrice || 0).toLocaleString()}
-                              </span>
-                              <span className="text-[9px] font-bold text-slate-400 line-through leading-tight">
-                                KSh {Number(product.retailPrice || 0).toLocaleString()}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-[12px] font-black text-black italic">
-                              KSh {Number(product.retailPrice || 0).toLocaleString()}
-                            </span>
-                          )}
-                       </div>
+                       <div className="flex flex-col gap-1">
+                          <div className="flex items-center justify-between bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-100">
+                             <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest">Retail Rate</span>
+                             <span className="text-[12px] font-black text-purple-700 italic">KSh {Number(product.retailPrice || 0).toLocaleString()}</span>
+                          </div>
 
-                       <div className="flex flex-col">
-                         <span className="text-[8px] font-black text-pink-500 uppercase tracking-widest mb-1">Bulk Rate</span>
-                         <span className="text-[12px] font-black text-pink-600">KSh {Number(product.wholesalePrice || 0).toLocaleString()}</span>
+                          <div className="flex items-center justify-between bg-pink-50 px-3 py-1.5 rounded-xl border border-pink-100">
+                             <span className="text-[8px] font-black text-pink-400 uppercase tracking-widest">Bulk Rate</span>
+                             <span className="text-[12px] font-black text-pink-700 italic">KSh {Number(product.wholesalePrice || 0).toLocaleString()}</span>
+                          </div>
+
+                          {product.isDiscounted && (
+                            <div className="flex items-center justify-between bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100">
+                               <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Sale Rate</span>
+                               <span className="text-[12px] font-black text-emerald-600 italic">KSh {Number(product.discountPrice || 0).toLocaleString()}</span>
+                            </div>
+                          )}
                        </div>
                     </div>
                   </div>

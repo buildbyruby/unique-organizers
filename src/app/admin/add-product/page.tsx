@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { upsertProduct } from '@/app/admin/actions'
-import { Plus, Loader2, CheckCircle2, AlertCircle, ArrowLeft, ImagePlus, X, Tag, Ruler, Palette } from 'lucide-react'
+import { Plus, Loader2, CheckCircle2, AlertCircle, ArrowLeft, ImagePlus, Palette } from 'lucide-react'
 import Link from 'next/link'
 
 const PRESET_COLORS = [
@@ -16,57 +16,11 @@ const PRESET_COLORS = [
 
 const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL", "Free Size"];
 
-// ELITE CATEGORY STRUCTURE
-const CATEGORY_MAP: Record<string, { label: string, subs: string[] }> = {
-  KITCHEN: {
-    label: "Kitchen & Dining",
-    subs: ["Small Appliances", "Storage & Organizers", "Cookware", "Plates & Dining", "Cutlery", "Lighting", "Barware", "Tea & Coffee Gear"]
-  },
-  HOME_LIVING: {
-    label: "Home & Living",
-    subs: ["Decor", "Furniture", "Rugs", "Bedding", "Cushions", "Candles & Scents", "Curtains", "Wall Art", "Mirrors"]
-  },
-  GIFTS: {
-    label: "Gifts & Occasions",
-    subs: ["Corporate", "Birthday", "Wedding", "Luxury Hampers", "Anniversary", "Baby Shower", "Seasonal", "Greeting Cards"]
-  },
-  ELECTRONICS: {
-    label: "Electronics",
-    subs: ["Audio", "Gadgets", "Smart Home", "Office Gear", "Photography", "Wearables", "Gaming", "Power & Cables"]
-  },
-  CLOTHING: {
-    label: "Clothing & Apparel",
-    subs: ["Men", "Women", "Kids", "Accessories", "Footwear", "Activewear", "Sleepwear", "Outerwear"]
-  },
-  BEAUTY: {
-    label: "Beauty & Personal Care",
-    subs: ["Skincare", "Makeup", "Fragrance", "Haircare", "Men's Grooming", "Beauty Tools", "Bath & Body", "Oral Care"]
-  },
-  GROCERY: {
-    label: "Grocery & Food",
-    subs: ["Dry Goods", "Beverages", "Spices", "Snacks", "Coffee & Tea", "Organic", "Condiments", "Baking Essentials"]
-  },
-  TOYS: {
-    label: "Toys & Baby",
-    subs: ["Educational", "Plush", "Baby Gear", "Games", "Outdoor Play", "Building Sets", "Puzzles"]
-  },
-  SPORTS: {
-    label: "Sports & Outdoors",
-    subs: ["Fitness", "Camping", "Cycling", "Swimming", "Team Sports", "Active Gear", "Yoga & Pilates"]
-  },
-  TOOLS: {
-    label: "Tools & Hardware",
-    subs: ["Hand Tools", "Power Tools", "Organizers", "Safety Gear", "Gardening Tools", "Home Improvement"]
-  },
-  OFFICE: {
-    label: "Office Supplies",
-    subs: ["Stationery", "Desk Organizers", "Tech Accessories", "Writing Tools", "Paper Products", "Filing & Storage"]
-  },
-  HEALTH: {
-    label: "Health & Wellness",
-    subs: ["Supplements", "Personal Care", "Yoga & Meditation", "Massagers", "Aromatherapy", "Fitness Trackers"]
-  }
-};
+interface Category {
+  id: string;
+  name: string;
+  children?: Category[];
+}
 
 export default function AddProductPage() {
   const [loading, setLoading] = useState(false)
@@ -75,8 +29,23 @@ export default function AddProductPage() {
   const [selectedColors, setSelectedColors] = useState<string[]>([])
   const [selectedSizes, setSelectedSizes] = useState<string[]>([])
   
-  // Track selected category to dynamically filter subcategories
-  const [activeCategory, setActiveCategory] = useState<string>('KITCHEN')
+  const [categories, setCategories] = useState<Category[]>([])
+  const [subCategories, setSubCategories] = useState<Category[]>([])
+
+  useEffect(() => {
+    async function fetchCategories() {
+      const res = await fetch('/api/categories');
+      const data = await res.json();
+      setCategories(data);
+    }
+    fetchCategories();
+  }, []);
+
+  const handleParentCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    const parent = categories.find(c => c.id === id);
+    setSubCategories(parent?.children || []);
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -133,7 +102,7 @@ export default function AddProductPage() {
           </div>
 
           {message && (
-            <div className={`p-6 rounded-2xl flex items-center gap-4 animate-in fade-in slide-in-from-top-4 ${
+            <div className={`p-6 rounded-2xl flex items-center gap-4 ${
               message.type === 'success' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'
             }`}>
               {message.type === 'success' ? <CheckCircle2 size={24}/> : <AlertCircle size={24}/>}
@@ -144,24 +113,17 @@ export default function AddProductPage() {
           <div className="grid lg:grid-cols-2 gap-12">
             <div className="space-y-8">
               <div className="group relative aspect-square bg-white/5 border-2 border-dashed border-white/10 rounded-[3rem] overflow-hidden hover:border-purple-500 transition-all flex flex-col items-center justify-center gap-4">
-                <input 
-                  type="file" 
-                  name="images" 
-                  multiple 
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                />
-                <div className="flex flex-col items-center gap-2 text-gray-500 group-hover:text-purple-500 transition-colors">
+                <input type="file" name="images" multiple accept="image/*" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                <div className="flex flex-col items-center gap-2 text-gray-500 group-hover:text-purple-500">
                   <ImagePlus size={48} strokeWidth={1} />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Upload_Product_Images</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Upload_Images</span>
                 </div>
               </div>
 
               {imagePreviews.length > 0 && (
                 <div className="grid grid-cols-4 gap-4">
                   {imagePreviews.map((url, i) => (
-                    <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-white/10 relative">
+                    <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-white/10">
                       <img src={url} className="w-full h-full object-cover" alt="Preview" />
                     </div>
                   ))}
@@ -174,16 +136,7 @@ export default function AddProductPage() {
                 </h3>
                 <div className="flex flex-wrap gap-3">
                   {PRESET_COLORS.map((color) => (
-                    <button
-                      key={color.hex}
-                      type="button"
-                      onClick={() => toggleColor(color.hex)}
-                      className={`w-12 h-12 rounded-full border-2 transition-all transform hover:scale-110 ${
-                        selectedColors.includes(color.hex) ? 'border-purple-500 scale-110 shadow-[0_0_15px_rgba(147,51,234,0.5)]' : 'border-transparent'
-                      }`}
-                      style={{ backgroundColor: color.hex }}
-                      title={color.name}
-                    />
+                    <button key={color.hex} type="button" onClick={() => toggleColor(color.hex)} className={`w-12 h-12 rounded-full border-2 transition transform hover:scale-110 ${selectedColors.includes(color.hex) ? 'border-purple-500 scale-110 shadow-[0_0_15px_rgba(147,51,234,0.5)]' : 'border-transparent'}`} style={{ backgroundColor: color.hex }} title={color.name} />
                   ))}
                 </div>
               </div>
@@ -192,42 +145,29 @@ export default function AddProductPage() {
             <div className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-2">Product_Identity</label>
-                <input name="name" required placeholder="e.g. Premium Cooker Set" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-sm focus:border-purple-500 outline-none transition" />
+                <input name="name" required placeholder="Product Name" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-sm focus:border-purple-500 outline-none transition" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-2">Category</label>
-                  <select 
-                    name="category" 
-                    required 
-                    value={activeCategory}
-                    onChange={(e) => setActiveCategory(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-sm focus:border-purple-500 outline-none appearance-none"
-                  >
-                    {Object.entries(CATEGORY_MAP).map(([slug, data]) => (
-                      <option key={slug} value={slug}>{data.label}</option>
-                    ))}
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-2">Main_Category</label>
+                  <select required onChange={handleParentCategoryChange} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-sm focus:border-purple-500 outline-none appearance-none">
+                    <option value="">Select Category</option>
+                    {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-2">Sub_Category</label>
-                  <select 
-                    name="subCategory" 
-                    required
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-sm focus:border-purple-500 outline-none appearance-none"
-                  >
+                  <select name="categoryId" required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-sm focus:border-purple-500 outline-none appearance-none">
                     <option value="">Select Subcategory</option>
-                    {CATEGORY_MAP[activeCategory]?.subs.map(sub => (
-                      <option key={sub} value={sub}>{sub}</option>
-                    ))}
+                    {subCategories.map(sub => <option key={sub.id} value={sub.id}>{sub.name}</option>)}
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-2">Retail_Price (KSh)</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-2">Retail_Price</label>
                   <input name="retailPrice" type="number" required placeholder="0.00" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-sm focus:border-purple-500 outline-none" />
                 </div>
                 <div className="space-y-2">
@@ -240,14 +180,7 @@ export default function AddProductPage() {
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-2">Size_Variants</label>
                 <div className="flex flex-wrap gap-2">
                   {SIZE_OPTIONS.map(size => (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => toggleSize(size)}
-                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${
-                        selectedSizes.includes(size) ? 'bg-purple-600 text-white' : 'bg-white/5 text-gray-500 hover:bg-white/10'
-                      }`}
-                    >
+                    <button key={size} type="button" onClick={() => toggleSize(size)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${selectedSizes.includes(size) ? 'bg-purple-600 text-white' : 'bg-white/5 text-gray-500 hover:bg-white/10'}`}>
                       {size}
                     </button>
                   ))}
@@ -256,20 +189,11 @@ export default function AddProductPage() {
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-2">Asset_Description</label>
-                <textarea name="description" rows={5} required placeholder="Describe technical specifications and features..." className="w-full bg-white/5 border border-white/10 rounded-[2rem] px-6 py-5 text-sm focus:border-purple-500 outline-none resize-none" />
+                <textarea name="description" rows={5} required placeholder="Specifications..." className="w-full bg-white/5 border border-white/10 rounded-[2rem] px-6 py-5 text-sm focus:border-purple-500 outline-none resize-none" />
               </div>
 
-              <button 
-                type="submit" 
-                disabled={loading}
-                className="w-full bg-white text-black font-black uppercase tracking-[0.3em] py-8 rounded-[2rem] hover:bg-purple-600 hover:text-white transition transform active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-4 italic"
-              >
-                {loading ? <Loader2 className="animate-spin" size={24} /> : (
-                  <>
-                    <Plus size={24} strokeWidth={3} />
-                    Deploy_Asset
-                  </>
-                )}
+              <button type="submit" disabled={loading} className="w-full bg-white text-black font-black uppercase tracking-[0.3em] py-8 rounded-[2rem] hover:bg-purple-600 hover:text-white transition italic">
+                {loading ? <Loader2 className="animate-spin" size={24} /> : 'Deploy_Asset'}
               </button>
             </div>
           </div>
