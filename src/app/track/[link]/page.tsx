@@ -4,9 +4,12 @@ import { notFound } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
-export default async function LiveTrackingPage({ params }: { params: { link: string } }) {
+export default async function LiveTrackingPage({ params }: { params: Promise<{ link: string }> }) {
+  // FIXED: Await the params Promise for Next.js 16
+  const resolvedParams = await params;
+  
   const order = await prisma.order.findUnique({
-    where: { uniqueOrderLink: params.link },
+    where: { uniqueOrderLink: resolvedParams.link },
     include: { items: { include: { product: true } } }
   })
 

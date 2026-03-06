@@ -2,9 +2,12 @@ import { prisma } from "@/lib/prisma"
 import { CheckCircle2, Package, Truck, MapPin, ShieldCheck, Clock } from "lucide-react"
 import Link from "next/link"
 
-export default async function OrderTrackingPage({ params }: { params: { id: string } }) {
+export default async function OrderTrackingPage({ params }: { params: Promise<{ id: string }> }) {
+  // FIXED: Await the params Promise for Next.js 16
+  const resolvedParams = await params;
+  
   const order = await prisma.order.findUnique({
-    where: { uniqueOrderLink: params.id },
+    where: { uniqueOrderLink: resolvedParams.id },
     include: { items: { include: { product: true } } }
   })
 
