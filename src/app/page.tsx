@@ -190,9 +190,10 @@ export default async function HomePage(props: {
 
       {/* --- NAVBAR --- */}
       <nav className="sticky top-0 w-full z-[100] backdrop-blur-2xl border-b border-white/40 bg-white/40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
-          <div className="flex justify-between items-center gap-4">
-            <Link href="/" className="text-xl md:text-2xl font-black tracking-tighter flex items-center gap-3 group shrink-0">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4">
+          <div className="flex flex-wrap items-center justify-between gap-y-3 gap-x-2 md:gap-4">
+            
+            <Link href="/" className="order-1 text-xl md:text-2xl font-black tracking-tighter flex items-center gap-3 group shrink-0">
               <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
                  <div className="w-5 h-5 bg-purple-500 rounded-sm rotate-45" />
               </div>
@@ -201,18 +202,19 @@ export default async function HomePage(props: {
                 <span className="text-[8px] font-black tracking-[0.4em] text-purple-600 uppercase hidden sm:block">Organizers</span>
               </div>
             </Link>
-            
-            <div className="hidden md:flex flex-1 max-w-md mx-8">
-              <form action="/" className="relative w-full">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input name="q" defaultValue={query} placeholder="SEARCH ARCHIVES..." className="w-full bg-white border border-slate-200 rounded-full py-3 pl-14 pr-6 text-sm font-bold tracking-widest outline-none focus:border-purple-500 transition-all" />
-              </form>
-            </div>
 
-            <div className="flex items-center space-x-2 md:space-x-4 shrink-0">
+            <div className="order-2 md:order-3 flex items-center space-x-2 md:space-x-4 shrink-0">
               <Link href="/admin/login" className="p-2.5 bg-slate-100 rounded-xl text-slate-600 hover:bg-slate-900 hover:text-white transition-all"><Lock size={18} /></Link>
               <Link href="/dashboard" className="bg-slate-900 text-white px-5 md:px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">Client Panel</Link>
             </div>
+
+            <div className="order-3 md:order-2 flex w-full md:flex-1 md:max-w-md mx-0 md:mx-8">
+              <form action="/" className="relative w-full">
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input name="q" defaultValue={query} placeholder="SEARCH ARCHIVES..." className="w-full bg-white border border-slate-200 rounded-full py-3 pl-14 pr-6 text-sm font-bold tracking-widest outline-none focus:border-purple-500 transition-all shadow-sm" />
+              </form>
+            </div>
+
           </div>
         </div>
       </nav>
