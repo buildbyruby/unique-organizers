@@ -253,4 +253,4 @@ export default function ProductDetailClient({ product }: { product: any }) {
       </main>
     </div>
   )
-}
+} 
