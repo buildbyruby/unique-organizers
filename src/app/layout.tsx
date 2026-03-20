@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Link from 'next/link';
@@ -16,6 +16,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="scroll-smooth">
       <head>
+        {/* GOOGLE SEARCH IDENTITY */}
+        <title>Unique Organizers | Premium System Stock Nairobi</title>
+        <meta name="description" content="The elite destination for high-tier organizational assets. Located at Sirikiwa Business Centre, Accra Road." />
+        
+        {/* THE SQUARE ICON FOR GOOGLE & TABS */}
+        <link rel="icon" href="/icon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/icon.png" />
+        
         <Script 
           src="https://upload-widget.cloudinary.com/global/all.js" 
           strategy="beforeInteractive" 
