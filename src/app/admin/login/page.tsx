@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react";
-import { login } from "@/app/actions";
+import { adminLogin } from "@/app/admin/actions";
 import { useRouter } from "next/navigation";
 import { Lock, Loader2, AlertCircle } from "lucide-react";
 
@@ -15,7 +15,7 @@ export default function AdminLogin() {
     setError("");
     
     // Call the Server Action directly
-    const result = await login(formData);
+    const result = await adminLogin(formData);
 
     if (result.success) {
       // Force a hard refresh to update the middleware/cookies

@@ -62,12 +62,12 @@ export async function getDetailedAnalytics(): Promise<ActionResponse> {
         analyticsLogs,
         topProducts: products.map(p => ({ 
           name: p.name, 
-          clicks: Math.floor(Math.random() * 50) + 5 
+          clicks: 0 
         })),
         adStats: adverts.map(ad => ({ 
           title: ad.title, 
-          clicks: Math.floor(Math.random() * 20), 
-          impressions: Math.floor(Math.random() * 200) + 50 
+          clicks: ad.clicks, 
+          impressions: ad.impressions 
         })),
         inventory: products
       }
@@ -170,7 +170,7 @@ export async function adminLogin(formData: FormData): Promise<ActionResponse> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
-  if (email === "admin@uniqueorganizers.com" && password === "Admin@2026") {
+  if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
     const token = await new SignJWT({ userId: "ADMIN_BYPASS_2026", role: "ADMIN" })
       .setProtectedHeader({ alg: "HS256" })
       .setExpirationTime("1d")

@@ -13,11 +13,11 @@ export async function POST(request: Request) {
     let role = 'CUSTOMER';
 
     // 1. MASTER ADMIN CHECK
-    const isAdminEmail = email === 'admin' || email === 'admin@unique.com';
+    const isAdminEmail = email === process.env.ADMIN_EMAIL;
     const isValidAdminPass = password === process.env.ADMIN_PASSWORD;
 
     if (isAdminEmail && isValidAdminPass) {
-      userObj = { id: 'master-admin', email: 'admin@unique.com' };
+      userObj = { id: 'master-admin', email: process.env.ADMIN_EMAIL || 'admin@uniqueorganizers.com' };
       role = 'ADMIN';
     } else {
       // 2. DATABASE CHECK

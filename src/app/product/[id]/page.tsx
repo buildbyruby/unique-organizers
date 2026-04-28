@@ -40,10 +40,10 @@ export default function ProductPage() {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`/api/products`)
+    fetch(`/api/products/${id}`)
       .then(res => res.json())
-      .then(data => {
-        const found = data.find((p: any) => p.id === id);
+      .then(found => {
+        
         if (found) {
           setProduct(found);
           if (found.colors?.length > 0) setSelectedColor(found.colors[0]);

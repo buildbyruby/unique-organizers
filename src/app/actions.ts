@@ -43,41 +43,18 @@ async function uploadToCloudinary(file: File, resourceType: "image" | "video"): 
 }
 
 // --- HELPER: SEAMLESS GUEST ENGINE ---
-async function ensureAuthSession(): Promise<string> {
+async function ensureAuthSession(): Promise<string | null> {
   const token = (await cookies()).get("auth_token")?.value;
-  
-  if (token) {
-    try {
-      const { payload } = await jwtVerify(token, SECRET);
-      if (payload.userId === "ADMIN_BYPASS_2026") return payload.userId as string;
-      const user = await prisma.user.findUnique({ where: { id: payload.userId as string } });
-      if (user) return user.id;
-    } catch (e) {
-      // Token invalid or expired
-    }
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, SECRET);
+    if (payload.userId === "ADMIN_BYPASS_2026") return payload.userId as string;
+    const user = await prisma.user.findUnique({ where: { id: payload.userId as string } });
+    if (user) return user.id;
+    return null;
+  } catch (e) {
+    return null;
   }
-
-  const guestId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-  const dummyEmail = `${guestId}@guest.unique.com`;
-  const hashedPassword = await bcrypt.hash(guestId, 10); 
-
-  const user = await prisma.user.create({
-    data: { 
-      email: dummyEmail, 
-      password: hashedPassword, 
-      name: "Guest Client", 
-      role: "CUSTOMER" 
-    }
-  });
-
-  const newToken = await new SignJWT({ userId: user.id, role: user.role })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("30d")
-    .sign(SECRET);
-
-  (await cookies()).set("auth_token", newToken, { httpOnly: true, secure: true, sameSite: "lax" });
-
-  return user.id;
 }
 
 // --- 1. ADMIN PERFORMANCE & ANALYTICS ---
@@ -207,7 +184,7 @@ export async function login(formData: FormData): Promise<ActionResponse> {
   const password = formData.get("password") as string;
   const email = emailInput.toLowerCase().trim();
 
-  if (email === "admin@unique.com" && password === "unique123") {
+  if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
     const token = await new SignJWT({ userId: "ADMIN_BYPASS_2026", role: "ADMIN" })
       .setProtectedHeader({ alg: "HS256" })
       .setExpirationTime("24h")
@@ -365,7 +342,7 @@ export async function getClientPortalData() {
 
     const [user, orders, wishlist, cart] = await Promise.all([
       userId === "ADMIN_BYPASS_2026" 
-        ? { id: userId, name: "Administrator", email: "admin@unique.com" } 
+        ? { id: userId, name: "Administrator", email: process.env.ADMIN_EMAIL || 'admin@uniqueorganizers.com' } 
         : prisma.user.findUnique({ where: { id: userId } }),
       prisma.order.findMany({ where: { userId }, include: { items: { include: { product: true } } }, orderBy: { createdAt: 'desc' } }),
       prisma.wishlist.findMany({ where: { userId }, include: { product: true }, orderBy: { createdAt: 'desc' } }),
@@ -381,6 +358,7 @@ export async function getClientPortalData() {
 export async function addToCart(productId: string, color?: string, size?: string): Promise<ActionResponse> {
   try {
     const userId = await ensureAuthSession();
+    if (!userId) return { success: false, message: "LOGIN_REQUIRED" };
     if (userId === "ADMIN_BYPASS_2026") return { success: false, message: "ADMIN_LIMIT" };
 
     await prisma.cartItem.create({
@@ -409,6 +387,7 @@ export async function removeFromCart(cartItemId: string): Promise<ActionResponse
 export async function toggleWishlist(productId: string): Promise<ActionResponse> {
   try {
     const userId = await ensureAuthSession();
+    if (!userId) return { success: false, message: "LOGIN_REQUIRED" };
     
     if (userId === "ADMIN_BYPASS_2026") {
        return { success: false, message: "ADMIN_LIMIT" };
@@ -436,6 +415,7 @@ export async function toggleWishlist(productId: string): Promise<ActionResponse>
 export async function initiateOrder(items: any[], phone: string, total: number, clientName?: string): Promise<ActionResponse> {
   try {
     const userId = await ensureAuthSession();
+    if (!userId) return { success: false, message: "LOGIN_REQUIRED" };
 
     if (userId !== "ADMIN_BYPASS_2026" && clientName) {
       const user = await prisma.user.findUnique({ where: { id: userId } });

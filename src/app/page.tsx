@@ -16,6 +16,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { Metadata } from 'next';
+import HeroCarousel from "@/components/HeroCarousel";
 import FeedbackForm from '@/components/FeedbackForm';
 import PublicReviews from '@/components/PublicReviews';
 
@@ -94,7 +95,7 @@ export default async function HomePage(props: {
   const activeAdverts = await prisma.advert.findMany({
     where: { isActive: true },
     orderBy: { priority: 'desc' },
-    take: 1
+    take: 10
   });
 
   // --- 3. CATEGORIES DATA ---
@@ -238,19 +239,7 @@ export default async function HomePage(props: {
       {!query && activeAdverts.length > 0 && (
         <section className="pt-8 md:pt-12 px-4 md:px-8 relative z-10">
           <div className="max-w-7xl mx-auto">
-            {activeAdverts.map((ad) => (
-              <a key={ad.id} href={ad.link || "#catalog"} className="block relative group overflow-hidden rounded-[2rem] md:rounded-[3rem] aspect-[21/9] md:aspect-[32/9] bg-slate-900 border border-slate-800 shadow-2xl">
-                <img src={ad.imageUrl} alt={ad.title} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-700 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/40 to-transparent" />
-                <div className="absolute inset-0 p-6 md:p-16 flex flex-col justify-center max-w-2xl">
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-600/30 border border-purple-500/50 text-[9px] font-black uppercase tracking-[0.3em] text-purple-100 w-fit mb-4 backdrop-blur-md">
-                    Featured Partner
-                  </div>
-                  <h2 className="text-3xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter text-white leading-tight mb-4 drop-shadow-md">{ad.title}</h2>
-                  {ad.description && <p className="text-slate-200 text-sm md:text-lg font-medium max-w-md line-clamp-2 md:line-clamp-none drop-shadow-sm">{ad.description}</p>}
-                </div>
-              </a>
-            ))}
+            <HeroCarousel adverts={activeAdverts} />
           </div>
         </section>
       )}
