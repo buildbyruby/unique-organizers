@@ -39,7 +39,7 @@ export default function HeroCarousel({ adverts }: { adverts: any[] }) {
 
   return (
     <div className="relative w-full overflow-hidden rounded-[2rem] md:rounded-[3rem] bg-slate-900 mx-auto">
-      <div className="relative aspect-[21/9] md:aspect-[32/9] overflow-hidden">
+      <div className="relative aspect-[16/7] md:aspect-[32/9] overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={ad["id"]}
@@ -51,12 +51,12 @@ export default function HeroCarousel({ adverts }: { adverts: any[] }) {
           >
             <img src={ad["imageUrl"]} className="w-full h-full object-cover" alt={ad["title"]} />
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-            <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-16 max-w-2xl">
+            <div className="absolute inset-0 flex flex-col justify-center px-5 md:px-16 max-w-2xl">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }}>
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-600/40 border border-purple-500/50 text-[9px] font-black uppercase tracking-[0.3em] text-purple-100 w-fit mb-4 backdrop-blur-md">
                   <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" /> Featured Partner
                 </div>
-                <h2 className="text-3xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter text-white leading-tight mb-4">{ad["title"]}</h2>
+                <h2 className="text-xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter text-white leading-tight mb-3 md:mb-4 line-clamp-2">{ad["title"]}</h2>
                 {ad["description"] && <p className="text-slate-200 text-sm md:text-lg font-medium max-w-md line-clamp-2 mb-6">{ad["description"]}</p>}
                 {ad["link"] && (
                   <a href={ad["link"]} onClick={() => trackEngagement(ad["id"], "click")}
@@ -73,10 +73,10 @@ export default function HeroCarousel({ adverts }: { adverts: any[] }) {
         </div>
       </div>
       {adverts.length > 1 && (
-        <div className="flex gap-3 p-4 bg-black/60 backdrop-blur-md overflow-x-auto">
+        <div className="flex gap-2 md:gap-3 p-3 md:p-4 bg-black/60 backdrop-blur-md overflow-x-auto scrollbar-none">
           {adverts.map((a: any, i: number) => (
             <button key={a["id"]} onClick={() => { setIndex(i); setProgress(0); }}
-              className={`relative flex-shrink-0 w-24 h-16 md:w-32 md:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 ${i === index ? "border-purple-500 scale-105" : "border-white/10 opacity-50 hover:opacity-100"}`}>
+              className={`relative flex-shrink-0 w-16 h-10 md:w-32 md:h-20 rounded-lg md:rounded-xl overflow-hidden border-2 transition-all duration-300 ${i === index ? "border-purple-500 scale-105" : "border-white/10 opacity-50 hover:opacity-100"}`}>
               <img src={a["imageUrl"]} className="w-full h-full object-cover" alt={a["title"]} />
               <p className="absolute bottom-1 left-1 right-1 text-[8px] font-black uppercase text-white truncate">{a["title"]}</p>
             </button>

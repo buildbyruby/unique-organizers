@@ -74,7 +74,7 @@ export default function ProductDetailClient({ product }: { product: any }) {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-purple-500/30">
-      <nav className="p-8 max-w-7xl mx-auto flex justify-between items-center">
+      <nav className="px-4 py-5 md:p-8 max-w-7xl mx-auto flex justify-between items-center">
         <Link href="/" className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 hover:text-white transition">
           <ArrowLeft size={16} /> Return to Archives
         </Link>
@@ -83,7 +83,7 @@ export default function ProductDetailClient({ product }: { product: any }) {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-20 py-12">
+      <main className="max-w-7xl mx-auto px-4 md:px-8 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 py-6 md:py-12">
         <div className="relative group">
           <div className="absolute -inset-4 bg-purple-600/20 rounded-[4rem] blur-3xl opacity-0 group-hover:opacity-100 transition duration-1000" />
           <div className="relative aspect-[4/5] rounded-[3rem] overflow-hidden border border-white/10 bg-black">
@@ -127,7 +127,7 @@ export default function ProductDetailClient({ product }: { product: any }) {
             <span className="text-purple-500 text-[10px] font-black uppercase tracking-[0.5em] mb-4 block animate-pulse">
               Archive // {product.category || "General"}
             </span>
-            <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-8">
+            <h1 className="text-3xl md:text-5xl lg:text-7xl font-black uppercase tracking-tighter leading-none mb-6 md:mb-8">
               {product.name}
             </h1>
             <p className="text-gray-400 text-lg leading-relaxed max-w-xl">
@@ -135,10 +135,10 @@ export default function ProductDetailClient({ product }: { product: any }) {
             </p>
           </div>
 
-          <div className="mb-10 grid grid-cols-2 gap-4">
+          <div className="mb-8 md:mb-10 grid grid-cols-2 gap-3 md:gap-4">
             <button 
               onClick={() => handleModeSwitch('RETAIL')}
-              className={`p-6 rounded-[2rem] border transition-all text-left group ${!isWholesaleActive ? 'border-white bg-white/5' : 'border-white/5 opacity-40 hover:opacity-100'}`}
+              className={`p-4 md:p-6 rounded-[2rem] border transition-all text-left group ${!isWholesaleActive ? 'border-white bg-white/5' : 'border-white/5 opacity-40 hover:opacity-100'}`}
             >
               <div className="flex justify-between items-center mb-2">
                 <span className="text-[10px] font-black uppercase tracking-widest">Retail Tier</span>
@@ -149,7 +149,7 @@ export default function ProductDetailClient({ product }: { product: any }) {
 
             <button 
               onClick={() => handleModeSwitch('WHOLESALE')}
-              className={`p-6 rounded-[2rem] border transition-all text-left group ${isWholesaleActive ? 'border-purple-500 bg-purple-500/10' : 'border-white/5 opacity-40 hover:opacity-100'}`}
+              className={`p-4 md:p-6 rounded-[2rem] border transition-all text-left group ${isWholesaleActive ? 'border-purple-500 bg-purple-500/10' : 'border-white/5 opacity-40 hover:opacity-100'}`}
             >
               <div className="flex justify-between items-center mb-2">
                 <span className="text-[10px] font-black uppercase tracking-widest text-purple-400">Wholesale Tier</span>
@@ -228,7 +228,7 @@ export default function ProductDetailClient({ product }: { product: any }) {
           <div className="space-y-4">
             <button
               onClick={handleAddToCart}
-              className="w-full h-24 bg-white text-black rounded-[2rem] font-black uppercase tracking-[0.2em] text-sm flex items-center justify-between px-10 hover:bg-purple-600 hover:text-white transition-all transform active:scale-[0.98]"
+              className="w-full h-16 md:h-24 bg-white text-black rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs md:text-sm flex items-center justify-between px-6 md:px-10 hover:bg-purple-600 hover:text-white transition-all transform active:scale-[0.98]"
             >
               <div className="flex items-center gap-4">
                 <ShoppingCart size={20} />

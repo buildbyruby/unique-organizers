@@ -22,24 +22,21 @@ export type ActionResponse = {
   data?: any;
 };
 
-// --- HELPER: ROBUST CLOUDINARY UPLOAD ENGINE ---
+// --- HELPER: SUPABASE STORAGE UPLOAD ENGINE ---
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+const _supabase = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 async function uploadToCloudinary(file: File, resourceType: "image" | "video"): Promise<string> {
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  const base64Data = `data:${file.type};base64,${buffer.toString("base64")}`;
-
-  const fData = new FormData();
-  fData.append("file", base64Data);
-  fData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!);
-  
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
-    { method: "POST", body: fData }
-  );
-  
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || "Cloudinary Upload Failed");
-  return data.secure_url;
+  const ext = file.name.split(".").pop();
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await _supabase.storage
+    .from("product-images")
+    .upload(fileName, file, { cacheControl: "3600", upsert: false });
+  if (error) throw new Error("Upload failed: " + error.message);
+  const { data } = _supabase.storage.from("product-images").getPublicUrl(fileName);
+  return data.publicUrl;
 }
 
 // --- HELPER: SEAMLESS GUEST ENGINE ---

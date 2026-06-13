@@ -55,24 +55,22 @@ async function getAuth() {
 }
 
 /**
- * CLOUDINARY SYSTEM: Server-side direct upload
+ * SUPABASE STORAGE: Server-side upload
  */
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+const _supabase = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 async function uploadToCloudinary(file: File): Promise<string> {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
-
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", uploadPreset!);
-
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-    method: "POST",
-    body: formData,
-  });
-
-  if (!response.ok) throw new Error("Cloudinary upload failed");
-  const data = await response.json();
-  return data.secure_url;
+  const ext = file.name.split(".").pop();
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await _supabase.storage
+    .from("product-images")
+    .upload(fileName, file, { cacheControl: "3600", upsert: false });
+  if (error) throw new Error("Upload failed: " + error.message);
+  const { data } = _supabase.storage.from("product-images").getPublicUrl(fileName);
+  return data.publicUrl;
 }
 
 /**
