@@ -1,73 +1,69 @@
-# Unique Organizers — E-Commerce Platform
+# Unique Organizers
 
-> Premium organizational products e-commerce platform built for Unique Organizers, Nairobi. A full-stack storefront with admin management, real-time order tracking, and WhatsApp-integrated checkout.
+> Premium organizational products e-commerce platform built for Unique Organizers, a real business in Nairobi. A full-stack storefront with an admin panel, real-time order tracking, and WhatsApp-integrated checkout.
 
----
+This is one of two projects I've built that's currently in active use by a real business. Unique Organizers lets customers browse, wishlist, and purchase home and office organizational products, with orders processed through WhatsApp rather than a traditional card checkout, which matches how Kenyan consumers are used to shopping online.
 
-## What It Does
+## What it does
 
-Unique Organizers is a modern e-commerce platform that lets customers browse, wishlist, and purchase premium home and office organizational products. Orders are processed via WhatsApp for a seamless, human-touch experience familiar to Kenyan consumers.
+- **Storefront.** Product catalog with category filtering, search, retail vs wholesale pricing that switches automatically at quantity thresholds, color and size variants, and a wishlist for logged-in customers.
+- **WhatsApp checkout.** No accounts or card details required. The cart generates a formatted WhatsApp message so the customer completes their order the way they're already used to.
+- **Order tracking.** Every order gets a unique tracking link so customers can follow delivery progress without contacting the business directly.
+- **Admin panel.** Full product management (create, edit, delete, stock toggling), order logs with status updates, a live delivery tracking timeline, a marketing studio for rotating hero adverts with click and impression tracking, and review moderation.
+- **Customer portal.** Order history, wishlist, and cart management, plus a direct WhatsApp support line.
 
----
+## Problems it solves
 
-## Problems It Solves
+- Manual order tracking through WhatsApp chat history is replaced with every order logged automatically in the admin dashboard.
+- Customers get a real delivery tracking experience instead of repeatedly messaging to ask "where is my order."
+- Retail and wholesale customers are served from the same storefront, with pricing switching automatically rather than needing two separate systems.
+- Inventory, products, and marketing are all managed from one admin panel instead of scattered across tools.
 
-- **No more manual order management** — every WhatsApp order is logged automatically in the admin dashboard
-- **Real-time delivery tracking** — customers get a unique tracking link for every order
-- **Dual pricing system** — retail and wholesale pricing built in, auto-switching at quantity thresholds
-- **No tech barrier for customers** — checkout via WhatsApp means customers do not need accounts or card details
-- **Centralized inventory** — admin manages all products, categories, images, and stock in one place
-- **Marketing campaigns** — rotating hero adverts with impressions and click tracking
+## Tech stack
 
----
+| Layer | Choice | Why |
+|---|---|---|
+| Framework | Next.js 16 (App Router) | Server actions handle checkout, admin actions, and registration without a separate API layer |
+| Database | PostgreSQL via Prisma ORM | A relational schema fit this better than a document store, since orders, products, and customers all reference each other |
+| Auth | JWT (jose) + bcrypt | Custom auth so business logic around customer accounts and admin access could be controlled precisely |
+| Images | Cloudinary | Handles product image hosting and optimization without storing files on the server |
+| Payments | M-Pesa Daraja API | The real payment method customers in Kenya actually use |
+| Styling | Tailwind CSS v4 | |
+| Animation | Framer Motion | |
+| Deployment | Vercel | |
 
-## Tech Stack
+## Project structure
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 16 (App Router) |
-| Database | PostgreSQL via Prisma ORM |
-| Auth | JWT (jose) + bcrypt |
-| Images | Cloudinary |
-| Payments | M-Pesa Daraja API |
-| Styling | Tailwind CSS v4 |
-| Animations | Framer Motion |
-| Deployment | Vercel |
+```
+src/
+├── app/
+│   ├── admin/          # Admin panel pages and server actions
+│   ├── api/            # API routes
+│   ├── product/        # Product detail pages, checkout, WhatsApp action
+│   ├── dashboard/       # Customer portal
+│   ├── track/          # Order tracking
+│   └── actions.ts      # Core server actions
+├── components/         # Reusable UI components
+├── context/             # Cart context
+└── lib/                 # Database and utility helpers
+```
 
----
+## Getting started
 
-## Key Features
+```bash
+git clone https://github.com/<your-username>/unique-organizers.git
+cd unique-organizers
+npm install
+npx prisma generate
+npx prisma db push
+npm run dev
+```
 
-### Storefront
-- Product catalog with category and subcategory filtering
-- Search across all products
-- Retail vs wholesale pricing toggle
-- Color and size variant selection
-- Wishlist (requires login)
-- Cart with localStorage persistence
-- WhatsApp checkout with formatted order message
-- Order tracking via unique link
+App runs on [http://localhost:5000](http://localhost:5000).
 
-### Admin Panel
-- Product management (create, edit, delete, stock toggle)
-- Order logs with status management
-- Delivery tracking with live progress timeline
-- Marketing studio — create and manage hero adverts
-- Real-time analytics dashboard
-- Client feedback and review moderation
+### Required environment variables
 
-### Customer Portal
-- Order history with delivery status
-- Wishlist management
-- Cart management
-- Direct WhatsApp support line
-
----
-
-## Environment Variables
-
-Create a .env.local file with the following:
-
+```
 DATABASE_URL=
 JWT_SECRET=
 ADMIN_EMAIL=
@@ -78,44 +74,15 @@ MPESA_CONSUMER_KEY=
 MPESA_CONSUMER_SECRET=
 MPESA_PASSKEY=
 NEXT_PUBLIC_URL=
+```
 
----
+## What I'd improve next
 
-## Getting Started
+- **Automated testing.** This project handles real orders and real M-Pesa payments for a live business, so adding tests around checkout and payment flows would reduce risk as it grows.
+- **Image upload validation.** Add file size and type checks on the Cloudinary upload flow in the admin panel.
+- **Customer notifications.** Send an automated message when order status changes, instead of relying on customers checking the tracking link themselves.
 
-Install dependencies:
-npm install
-
-Generate Prisma client:
-npx prisma generate
-
-Push schema to database:
-npx prisma db push
-
-Run development server:
-npm run dev
-
-App runs on http://localhost:5000
-
----
-
-## Project Structure
-
-src/
-├── app/
-│   ├── admin/          # Admin panel pages and actions
-│   ├── api/            # API routes
-│   ├── product/        # Product detail pages
-│   ├── dashboard/      # Customer portal
-│   ├── track/          # Order tracking
-│   └── actions.ts      # Core server actions
-├── components/         # Reusable UI components
-├── context/            # Cart context
-└── lib/                # Database and utility helpers
-
----
-
-## Business Info
+## Business info
 
 Unique Organizers
 Sirikiwa Business Centre, Accra Road, Nairobi
@@ -123,4 +90,4 @@ Sirikiwa Business Centre, Accra Road, Nairobi
 
 ---
 
-Built with love for the Nairobi market
+Built by Ruby Kituli
