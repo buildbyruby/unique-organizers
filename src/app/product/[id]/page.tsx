@@ -7,7 +7,6 @@ import {
   Heart, Tag, Landmark, MessageCircle, Star, ShieldCheck
 } from 'lucide-react';
 import { trackEngagement, toggleWishlist } from '@/app/actions';
-import { processCheckoutAndWhatsApp } from '../whatsapp-action';
 
 export default function ProductPage() {
   const params = useParams();
@@ -20,7 +19,8 @@ export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [activeMedia, setActiveMedia] = useState<{type: 'image' | 'video', url: string} | null>(null);
-  const [syncing, setSyncing] = useState<'cart' | 'wishlist' | 'whatsapp' | null>(null);
+  const [syncing, setSyncing] = useState<'cart' | 'wishlist' | 'pay' | null>(null);
+  const [customerPhone, setCustomerPhone] = useState<string>("");
 
   // Robust resolver for multi-format image data
   const resolveImages = (data: any): string[] => {
@@ -76,25 +76,38 @@ export default function ProductPage() {
 
   const liveTotal = unitPrice * quantity;
 
-  const handleWhatsAppOrder = async () => {
-    setSyncing('whatsapp');
-    const result = await processCheckoutAndWhatsApp({
-      productId: product.id,
-      productName: product.name,
-      price: unitPrice,
-      color: selectedColor,
-      size: selectedSize,
-      quantity: quantity,
-      phone: "", 
-      origin: window.location.origin
-    });
-
-    if (result.success && result.url) {
-      window.location.href = result.url;
-    } else {
-      alert("Checkout synchronization failed.");
+  const handlePaystackDirect = async () => {
+    if (!customerPhone || customerPhone.trim().length < 9) {
+      alert("Please enter your phone number to pay.");
+      return;
     }
-    setSyncing(null);
+    setSyncing('pay');
+    try {
+      const res = await fetch("/api/paystack/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: [{
+            productId: product.id,
+            quantity,
+            color: selectedColor,
+            size: selectedSize,
+            pricingTier: isWholesaleEligible ? "wholesale" : "retail",
+          }],
+          phone: customerPhone.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.authorizationUrl) {
+        alert(data.error || "Could not start payment.");
+        setSyncing(null);
+        return;
+      }
+      window.location.href = data.authorizationUrl;
+    } catch {
+      alert("Payment connection failed.");
+      setSyncing(null);
+    }
   };
 
   const handleDeployToCart = async () => {
@@ -231,14 +244,24 @@ export default function ProductPage() {
               </div>
 
               <div className="grid gap-3 md:gap-5">
-                <button 
-                  onClick={handleWhatsAppOrder}
-                  disabled={syncing !== null}
-                  className="h-20 md:h-28 bg-[#25D366] text-white rounded-2xl md:rounded-[2.5rem] font-black uppercase tracking-[0.1em] md:tracking-[0.25em] hover:bg-green-600 transition-all flex items-center justify-center gap-3 md:gap-5 shadow-xl shadow-green-200 disabled:opacity-50 italic text-sm md:text-lg"
-                >
-                  {syncing === 'whatsapp' ? <Loader2 className="animate-spin" /> : <MessageCircle size={24} strokeWidth={3} />}
-                  <span className="hidden xs:inline">Direct_Deployment_to_</span>WhatsApp
-                </button>
+                <div className="space-y-3">
+                  <input
+                    type="tel"
+                    placeholder="Phone number for payment & delivery (e.g. 0712345678)"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-purple-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={handlePaystackDirect}
+                    disabled={syncing !== null}
+                    className="w-full h-20 md:h-24 bg-purple-600 text-white rounded-2xl md:rounded-[2.5rem] font-black uppercase tracking-[0.15em] md:tracking-[0.25em] hover:bg-purple-700 transition-all flex items-center justify-center gap-3 md:gap-5 shadow-xl shadow-purple-200 disabled:opacity-50 italic text-base md:text-xl"
+                  >
+                    {syncing === 'pay' ? <Loader2 className="animate-spin" /> : null}
+                    <span>{syncing === 'pay' ? "Connecting..." : "Pay"}</span>
+                  </button>
+                </div>
 
                 <div className="grid grid-cols-2 gap-3 md:gap-5">
                   <button 

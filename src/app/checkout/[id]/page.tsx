@@ -2,22 +2,27 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useRouter, useParams } from "next/navigation"
+import { useParams } from "next/navigation"
 import { ShoppingCart, ArrowLeft, MessageSquare, ShieldCheck, Minus, Plus, Globe, Star, Loader2 } from "lucide-react"
-import { initiateOrder, getClientPortalData } from "@/app/actions"
+import { getClientPortalData } from "@/app/actions"
 
 export default function CheckoutPage() {
-  const router = useRouter()
   const { id } = useParams()
   const [product, setProduct] = useState<any>(null)
   const [quantity, setQuantity] = useState(1)
   const [selectedColor, setSelectedColor] = useState("")
+  const [email, setEmail] = useState("")
+  const [phone, setPhone] = useState("")
+  const [clientName, setClientName] = useState("")
   const [loading, setLoading] = useState(false)
-  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
     getClientPortalData().then(res => {
-      if (res?.data?.user) setUser(res.data.user)
+      if (res?.data?.user) {
+        const u = res.data.user
+        if (u.email && !u.email.includes("guest")) setEmail(u.email)
+        if (u.name && u.name !== "Guest Client") setClientName(u.name)
+      }
     })
 
     fetch(`/api/products`)
@@ -37,33 +42,44 @@ export default function CheckoutPage() {
   const unitPrice = isWholesale ? product.wholesalePrice : (product.isDiscounted ? product.discountPrice : product.retailPrice)
   const totalCost = unitPrice * quantity
 
-  const handleAcquisition = async () => {
-    let finalName = user?.name || "";
-    
-    // Check if they are part of the new seamless guest session
-    if (!user || user.name === "Guest Client") {
-      const promptedName = window.prompt("Enter your full name for dispatch:");
-      if (!promptedName) return; // User cancelled
-      finalName = promptedName;
+  const handlePaystackBuyNow = async () => {
+    if (!email || !email.includes("@")) {
+      alert("Please enter a valid email address for your receipt.")
+      return
     }
-
-    const phoneInput = window.prompt("Enter M-Pesa Number for logistics (e.g. 254712345678):")
-    if (!phoneInput) return
+    if (!phone || phone.trim().length < 9) {
+      alert("Please enter your phone number for dispatch.")
+      return
+    }
 
     setLoading(true)
     try {
-      const orderItems = [{ id: product.id, quantity, price: unitPrice, color: selectedColor }]
-      
-      const result = await initiateOrder(orderItems, phoneInput, totalCost, finalName)
+      const res = await fetch("/api/paystack/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: [{
+            productId: product.id,
+            quantity,
+            color: selectedColor,
+            pricingTier: isWholesale ? "wholesale" : "retail",
+          }],
+          email: email.trim(),
+          phone: phone.trim(),
+          clientName: clientName.trim() || "Customer",
+        }),
+      })
 
-      if (result.success) {
-        router.push(`/orders/${result.data.trackingLink}`)
-      } else {
-        alert("Acquisition Protocol Failed: " + result.message)
+      const data = await res.json()
+      if (!res.ok || !data.authorizationUrl) {
+        alert(data.error || "Could not start Paystack payment.")
+        setLoading(false)
+        return
       }
-    } catch (err) {
+
+      window.location.href = data.authorizationUrl
+    } catch {
       alert("System Sync Error. Check connection.")
-    } finally {
       setLoading(false)
     }
   }
@@ -75,7 +91,7 @@ export default function CheckoutPage() {
           <ArrowLeft size={14} /> Back_to_Registry
         </Link>
         <div className="flex items-center gap-2 text-[10px] uppercase text-purple-500">
-          <Globe size={12} className="animate-pulse" /> Secure_Channel_Active
+          <Globe size={12} className="animate-pulse" /> Paystack_Secured_Channel
         </div>
       </nav>
 
@@ -87,11 +103,11 @@ export default function CheckoutPage() {
         </div>
 
         <div>
-          <p className="text-purple-500 text-[10px] uppercase tracking-[0.4em] font-black">{product.category}</p>
+          <p className="text-purple-500 text-[10px] uppercase tracking-[0.4em] font-black">{product.category?.name || "Collection"}</p>
           <h1 className="text-7xl font-black uppercase mt-6 tracking-tighter italic leading-[0.8]">{product.name}</h1>
           <p className="text-gray-400 mt-6 max-w-md text-sm leading-relaxed">{product.description}</p>
 
-          <div className="grid grid-cols-2 gap-8 my-12 border-y border-white/5 py-10">
+          <div className="grid grid-cols-2 gap-8 my-10 border-y border-white/5 py-8">
             <div>
               <p className="text-[10px] uppercase text-gray-500 mb-1">Standard_Unit</p>
               <p className={`text-4xl font-black ${isWholesale ? "line-through text-gray-800" : ""}`}>KSh {product.retailPrice.toLocaleString()}</p>
@@ -103,7 +119,7 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-12 mb-12">
+          <div className="flex flex-wrap gap-12 mb-8">
             <div>
               <p className="text-[10px] uppercase mb-4 text-gray-500 tracking-widest font-black">Color_Spec</p>
               <div className="flex gap-3">
@@ -125,13 +141,41 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          <button onClick={handleAcquisition} disabled={loading}
+          <div className="space-y-3 mb-6">
+            <input
+              type="text"
+              placeholder="Full Name for Dispatch"
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input
+                type="email"
+                required
+                placeholder="Email for Receipt *"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+              />
+              <input
+                type="tel"
+                required
+                placeholder="Phone (e.g. 0712345678) *"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+              />
+            </div>
+          </div>
+
+          <button onClick={handlePaystackBuyNow} disabled={loading}
             className="w-full h-24 bg-white text-black rounded-[2rem] font-black uppercase flex justify-between px-10 items-center hover:bg-purple-600 hover:text-white transition-all transform hover:-translate-y-1 active:scale-95 duration-300 shadow-xl shadow-white/5">
             <div className="flex items-center gap-4">
               {loading ? <Loader2 className="animate-spin" /> : <ShoppingCart />}
               <div className="text-left">
-                <p className="text-[10px] opacity-60 leading-none mb-1">{loading ? "Authorizing..." : "Finalize"}</p>
-                <p className="text-lg leading-none">Initialize_Acquisition</p>
+                <p className="text-[10px] opacity-60 leading-none mb-1">{loading ? "Connecting..." : "Paystack Checkout"}</p>
+                <p className="text-lg leading-none">Pay_Now</p>
               </div>
             </div>
             <div className="text-right">
@@ -146,7 +190,7 @@ export default function CheckoutPage() {
               <MessageSquare size={16} className="text-green-500" /> Live_Assistance
             </a>
             <div className="h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest">
-              <ShieldCheck size={16} className="text-purple-500" /> Secure_Protocol
+              <ShieldCheck size={16} className="text-purple-500" /> Paystack_Verified
             </div>
           </div>
         </div>
