@@ -62,14 +62,22 @@ function VerifyContent() {
             <p className="text-sm text-gray-400">
               Your order is confirmed and being prepared for dispatch. Redirecting to live tracking...
             </p>
-            {trackingLink && (
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {trackingLink && (
+                <Link
+                  href={`/orders/${trackingLink}`}
+                  className="inline-flex items-center gap-2 bg-purple-600 text-white font-black uppercase text-xs px-6 py-3 rounded-xl hover:bg-purple-500 transition"
+                >
+                  Track Order Now <ArrowRight size={14} />
+                </Link>
+              )}
               <Link
-                href={`/orders/${trackingLink}`}
-                className="inline-flex items-center gap-2 bg-white text-black font-black uppercase text-xs px-6 py-3 rounded-xl hover:bg-purple-500 hover:text-white transition"
+                href="/"
+                className="inline-flex items-center gap-2 bg-white text-black font-black uppercase text-xs px-6 py-3 rounded-xl hover:bg-zinc-200 transition"
               >
-                Track Order Now <ArrowRight size={14} />
+                Back to Store
               </Link>
-            )}
+            </div>
           </>
         )}
 

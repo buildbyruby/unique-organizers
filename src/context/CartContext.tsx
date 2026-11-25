@@ -6,6 +6,9 @@ type CartItem = {
   productId: string;
   name: string;
   price: number;
+  retailPrice: number;
+  wholesalePrice?: number;
+  minWholesale?: number;
   quantity: number;
   color?: string;
   size?: string;
@@ -28,11 +31,24 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | null>(null);
 
+function resolveTierAndPrice(
+  baseTier: 'retail' | 'wholesale',
+  qty: number,
+  retailPrice: number,
+  wholesalePrice?: number,
+  minWholesale?: number
+): { tier: 'retail' | 'wholesale'; price: number } {
+  const minQty = minWholesale && minWholesale > 0 ? minWholesale : 5;
+  if ((baseTier === 'wholesale' || qty >= minQty) && wholesalePrice && wholesalePrice > 0 && qty >= minQty) {
+    return { tier: 'wholesale', price: wholesalePrice };
+  }
+  return { tier: 'retail', price: retailPrice };
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Persistence: Load cart from LocalStorage
   useEffect(() => {
     const saved = localStorage.getItem('unique-cart-v2');
     if (saved) {
@@ -44,47 +60,87 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Persistence: Save cart to LocalStorage
   useEffect(() => {
     localStorage.setItem('unique-cart-v2', JSON.stringify(cart));
   }, [cart]);
 
   const addToCart = (
-    product: any, 
-    color: string, 
-    quantity: number, 
+    product: any,
+    color: string,
+    quantity: number,
     pricingTier: 'retail' | 'wholesale',
     size?: string
   ) => {
-    const activePrice = pricingTier === 'wholesale' ? product.wholesalePrice : product.retailPrice;
+    const safeQty = Math.max(1, Number(quantity) || 1);
+    const retailPrice = Number(product.retailPrice) || 0;
+    const wholesalePrice = Number(product.wholesalePrice) || 0;
+    const minWholesale = Number(product.minWholesale) || 5;
+    const resolvedColor = color || 'Standard';
+    const resolvedSize = size || 'N/A';
+    const firstImg = Array.isArray(product.images) && product.images.length > 0
+      ? product.images[0]
+      : product.image || '';
 
     setCart(prev => {
-      // Composite key ensures unique variants (different colors/sizes) are distinct items
-      const compositeId = `${product.id}-${color}-${pricingTier}-${size || 'none'}`;
-      
-      const existingIndex = prev.findIndex(item => item.id === compositeId);
-      
-      if (existingIndex > -1) {
-        const updatedCart = [...prev];
-        updatedCart[existingIndex].quantity += quantity;
-        return updatedCart;
+      const matchIndex = prev.findIndex(
+        item =>
+          item.productId === product.id &&
+          (item.color || 'Standard') === resolvedColor &&
+          (item.size || 'N/A') === resolvedSize
+      );
+
+      if (matchIndex > -1) {
+        const current = prev[matchIndex];
+        const nextQty = current.quantity + safeQty;
+        const effectiveTier = nextQty >= minWholesale && wholesalePrice > 0 ? 'wholesale' : pricingTier;
+        const { tier, price } = resolveTierAndPrice(
+          effectiveTier,
+          nextQty,
+          current.retailPrice || retailPrice,
+          current.wholesalePrice || wholesalePrice,
+          current.minWholesale || minWholesale
+        );
+        const compositeId = `${product.id}-${resolvedColor}-${tier}-${resolvedSize}`;
+        const updated = [...prev];
+        updated[matchIndex] = {
+          ...current,
+          id: compositeId,
+          quantity: nextQty,
+          pricingTier: tier,
+          price,
+        };
+        return updated;
       }
 
-      return [...prev, { 
-        id: compositeId,
-        productId: product.id,
-        name: product.name, 
-        price: activePrice, 
-        quantity: quantity, 
-        color: color || 'Standard', 
-        size: size || 'N/A',
-        image: product.images[0],
-        pricingTier: pricingTier
-      }];
+      const { tier, price } = resolveTierAndPrice(
+        pricingTier,
+        safeQty,
+        retailPrice,
+        wholesalePrice,
+        minWholesale
+      );
+      const compositeId = `${product.id}-${resolvedColor}-${tier}-${resolvedSize}`;
+
+      return [
+        ...prev,
+        {
+          id: compositeId,
+          productId: product.id,
+          name: product.name,
+          price,
+          retailPrice,
+          wholesalePrice,
+          minWholesale,
+          quantity: safeQty,
+          color: resolvedColor,
+          size: resolvedSize,
+          image: firstImg,
+          pricingTier: tier,
+        },
+      ];
     });
-    
-    // Open drawer to show success, but do not redirect
-    setIsOpen(true); 
+
+    setIsOpen(true);
   };
 
   const removeFromCart = (id: string) => {
@@ -92,31 +148,43 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateQuantity = (id: string, delta: number) => {
-    setCart(prev => prev.map(item => {
-      if (item.id === id) {
+    setCart(prev =>
+      prev.map(item => {
+        if (item.id !== id) return item;
         const newQty = Math.max(1, item.quantity + delta);
-        return { ...item, quantity: newQty };
-      }
-      return item;
-    }));
+        const { tier, price } = resolveTierAndPrice(
+          item.pricingTier,
+          newQty,
+          item.retailPrice ?? item.price,
+          item.wholesalePrice,
+          item.minWholesale
+        );
+        return {
+          ...item,
+          quantity: newQty,
+          pricingTier: tier,
+          price,
+        };
+      })
+    );
   };
 
   const clearCart = () => setCart([]);
 
-  const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
-  const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const cartCount = cart.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
+  const cartTotal = cart.reduce((acc, item) => acc + ((Number(item.price) || 0) * (Number(item.quantity) || 0)), 0);
 
   const checkout = () => {
     if (cart.length === 0) return;
 
-    const phone = "254797517565"; 
+    const phone = "254797517565";
     let message = `*NEW ORDER FROM UNIQUE ORGANIZERS* 📦%0A`;
     message += `--------------------------------%0A%0A`;
 
     cart.forEach((item, index) => {
       const lineTotal = item.price * item.quantity;
       message += `*${index + 1}. ${item.name.toUpperCase()}*%0A`;
-      message += `   Attributes: ${item.color}${item.size !== 'N/A' ? ` | Size: ${item.size}` : ''}%0A`;
+      message += `   Attributes: ${item.color}${item.size && item.size !== 'N/A' ? ` | Size: ${item.size}` : ''}%0A`;
       message += `   Pricing: ${item.pricingTier.toUpperCase()}%0A`;
       message += `   Qty: ${item.quantity} x KSh ${item.price.toLocaleString()}%0A`;
       message += `   Subtotal: *KSh ${lineTotal.toLocaleString()}*%0A%0A`;
@@ -131,17 +199,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <CartContext.Provider value={{ 
-      cart, 
-      addToCart, 
-      removeFromCart, 
+    <CartContext.Provider value={{
+      cart,
+      addToCart,
+      removeFromCart,
       updateQuantity,
       clearCart,
-      checkout, 
-      isOpen, 
+      checkout,
+      isOpen,
       setIsOpen,
       cartCount,
-      cartTotal
+      cartTotal,
     }}>
       {children}
     </CartContext.Provider>

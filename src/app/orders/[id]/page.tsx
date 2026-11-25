@@ -76,8 +76,11 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
                 </p>
                 <p className="text-xl font-bold italic">{order.phoneNumber}</p>
              </div>
-             <div className="pt-8 border-t border-white/5">
-                <Link href="/" className="inline-block px-10 py-5 bg-white text-black rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-purple-600 hover:text-white transition-all">
+             <div className="pt-8 border-t border-white/5 flex flex-wrap gap-3">
+                <Link href={`/track/${order.uniqueOrderLink}`} className="inline-block px-8 py-5 bg-purple-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-purple-500 transition-all">
+                  Live Delivery Timeline
+                </Link>
+                <Link href="/" className="inline-block px-8 py-5 bg-white text-black rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-purple-600 hover:text-white transition-all">
                   Return to Mainframe
                 </Link>
              </div>

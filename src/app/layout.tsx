@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Unique Organizers | Premium System Stock Nairobi',
-  description: 'The elite destination for high-tier organizational assets. Located at Sirikiwa Business Centre, Accra Road.',
+  description: 'The elite destination for high-tier organizational assets. Located at Tumaini House, 5th Floor, Shop Number 4, Next to Cafe Deli, Behind Kencom Building.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

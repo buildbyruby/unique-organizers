@@ -26,8 +26,8 @@ export const dynamic = 'force-dynamic';
 // --- 1. SEO & BRANDING CONFIGURATION ---
 export const metadata: Metadata = {
   title: 'Unique Organizers | Premium System Stock Nairobi',
-  description: 'The elite destination for high-tier organizational assets. Located at Sirikiwa Business Centre, Accra Road. Delivery across Nairobi within 24 hours.',
-  keywords: ['Organizers', 'Nairobi Electronics', 'Unique Organizers Kenya', 'Sirikiwa Business Centre'],
+  description: 'The elite destination for high-tier organizational assets. Located at Tumaini House, 5th Floor, Shop Number 4, Next to Cafe Deli, Behind Kencom Building. Delivery across Nairobi within 24 hours.',
+  keywords: ['Organizers', 'Nairobi Electronics', 'Unique Organizers Kenya', "'Tumaini House, 5th Floor, Shop Number 4, Next to Cafe Deli, Behind Kencom Building'".slice(1, -1)],
   openGraph: {
     title: 'Unique Organizers | Elite System Stock',
     description: 'Direct access to high-tier organizational assets. Curated for performance.',
@@ -170,7 +170,7 @@ export default async function HomePage(props: {
 
   return (
     <div suppressHydrationWarning className="min-h-screen bg-[#F8F9FA] text-slate-900 selection:bg-purple-300/50 font-sans antialiased overflow-x-hidden relative">
-      <a href="https://wa.me/254797517565" target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-4 md:bottom-8 md:right-8 z-[150] group flex items-center gap-3">
+      <a href="https://wa.me/254797517565" target="_blank" rel="noopener noreferrer" className="fixed bottom-24 right-6 md:bottom-28 md:right-8 z-[150] group flex items-center gap-3">
         <div className="bg-white/80 backdrop-blur-xl border border-white/60 px-6 py-3 rounded-2xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0 pointer-events-none">
            <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Direct WhatsApp</span>
         </div>
@@ -186,7 +186,7 @@ export default async function HomePage(props: {
       </div>
 
       <div className="relative z-[90] w-full bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 py-2.5 text-center flex items-center justify-center gap-2 shadow-lg shadow-purple-900/20">
-        <span className="text-[9px] font-black uppercase tracking-[0.25em] text-white/90">Premium Stock Arrived • 24H Rapid Dispatch Available</span>
+        <span className="text-[9px] font-black uppercase tracking-[0.25em] text-white/90">Premium Stock Arrived • Tumaini House, 5th Floor, Shop Number 4, Next to Cafe Deli, Behind Kencom Building</span>
       </div>
 
       {/* --- NAVBAR --- */}
@@ -410,6 +410,7 @@ export default async function HomePage(props: {
               <div className="flex flex-col text-left">
                 <span className="text-[9px] font-black uppercase tracking-widest text-purple-600">Direct Support</span>
                 <span className="text-base font-black">+254 797 517 565</span>
+                <span className="text-[10px] font-bold text-slate-600 mt-0.5">Tumaini House, 5th Floor, Shop Number 4, Next to Cafe Deli, Behind Kencom Building</span>
               </div>
             </a>
           </div>
@@ -422,7 +423,7 @@ export default async function HomePage(props: {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="text-center md:text-left">
             <span className="text-2xl font-black tracking-tighter italic text-slate-900">UNIQUE <span className="text-purple-700">ORGANIZERS</span></span>
-            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2">© 2026 - Sirikiwa Business Centre, Nairobi</p>
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2">© 2026 - Tumaini House, 5th Floor, Shop Number 4, Next to Cafe Deli, Behind Kencom Building, Nairobi</p>
           </div>
           <div className="flex flex-col items-center gap-4">
              <Link href="/admin/login" className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase text-slate-400 hover:text-purple-600 transition-all"><UserCheck size={14} /> Staff Authorization</Link>

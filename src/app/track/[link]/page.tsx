@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma'
 import { Truck, MapPin, Package, Phone, CheckCircle2, Clock, Navigation } from 'lucide-react'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
@@ -115,10 +116,21 @@ export default async function LiveTrackingPage({ params }: { params: Promise<{ l
         </div>
 
         {/* FOOTER ACTION */}
-        <div className="p-8 flex-shrink-0">
-            <button className="w-full bg-white text-black py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-purple-600 hover:text-white transition-all">
-                Contact Support
-            </button>
+        <div className="p-8 flex-shrink-0 space-y-3">
+            <a
+              href={`https://wa.me/254797517565?text=${encodeURIComponent(`Hello Unique Organizers! Following up on my order ${order.uniqueOrderLink}.` )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-center w-full bg-purple-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-purple-500 transition-all"
+            >
+                Contact Support on WhatsApp
+            </a>
+            <Link
+              href="/"
+              className="block text-center w-full bg-white text-black py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-zinc-200 transition-all"
+            >
+                Back to Store
+            </Link>
         </div>
       </div>
     </div>

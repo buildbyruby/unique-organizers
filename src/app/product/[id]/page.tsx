@@ -120,7 +120,6 @@ export default function ProductPage() {
         isWholesaleEligible ? 'wholesale' : 'retail',
         selectedSize
       );
-      router.push('/dashboard');
     } catch (err) {
       alert("Cart Sync Error.");
     } finally {
@@ -261,6 +260,14 @@ export default function ProductPage() {
                     {syncing === 'pay' ? <Loader2 className="animate-spin" /> : null}
                     <span>{syncing === 'pay' ? "Connecting..." : "Pay"}</span>
                   </button>
+                <a
+                  href={`https://wa.me/254797517565?text=${encodeURIComponent(`Hi Unique Organizers! I'd love to ask about ${product.name} (${typeof window !== 'undefined' ? `${window.location.origin}/product/${product.id}` : `/product/${product.id}`}). `)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full h-16 md:h-20 bg-[#25D366] hover:bg-[#1ebe5d] text-white rounded-2xl md:rounded-[2rem] font-black uppercase tracking-[0.12em] md:tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-lg text-xs md:text-sm italic"
+                >
+                  <span>Ask on WhatsApp About This Item</span>
+                </a>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 md:gap-5">
