@@ -188,6 +188,7 @@ export default async function HomePage(props: {
 
       <div className="relative z-[90] w-full bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 py-2.5 text-center flex items-center justify-center gap-2 shadow-lg shadow-purple-900/20">
         <span className="text-[9px] font-black uppercase tracking-[0.25em] text-white/90">Premium Stock Arrived • Tumaini House, 5th Floor, Shop Number 4, Next to Cafe Deli, Behind Kencom Building</span>
+        <a href="https://www.facebook.com/share/1A16M7Hczn/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 hover:bg-[#1877F2] border border-white/25 text-[9px] font-black uppercase tracking-[0.18em] text-white shadow-sm transition-all shrink-0"><svg className="w-3 h-3 fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg><span>Facebook</span></a>
       </div>
 
       {/* --- NAVBAR --- */}
@@ -427,7 +428,7 @@ export default async function HomePage(props: {
             <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2">© 2026 - Tumaini House, 5th Floor, Shop Number 4, Next to Cafe Deli, Behind Kencom Building, Nairobi</p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4">
-             <a href="https://www.facebook.com/share/1A16M7Hczn/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase text-slate-700 hover:text-purple-600 hover:border-purple-300 transition-all">Facebook Page</a>
+             <a href="https://www.facebook.com/share/1A16M7Hczn/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-6 py-3 bg-[#1877F2]/10 border border-[#1877F2]/25 rounded-2xl text-[10px] font-black uppercase tracking-wider text-[#1877F2] hover:bg-[#1877F2] hover:text-white transition-all"><svg className="w-3 h-3 fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg><span>Follow on Facebook</span></a>
              <Link href="/admin/login" className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase text-slate-400 hover:text-purple-600 transition-all"><UserCheck size={14} /> Staff Authorization</Link>
           </div>
         </div>
