@@ -28,10 +28,11 @@ export const metadata: Metadata = {
   title: 'Unique Organizers | Premium System Stock Nairobi',
   description: 'The elite destination for high-tier organizational assets. Located at Tumaini House, 5th Floor, Shop Number 4, Next to Cafe Deli, Behind Kencom Building. Delivery across Nairobi within 24 hours.',
   keywords: ['Organizers', 'Nairobi Electronics', 'Unique Organizers Kenya', "'Tumaini House, 5th Floor, Shop Number 4, Next to Cafe Deli, Behind Kencom Building'".slice(1, -1)],
+  metadataBase: new URL('https://www.unique-organizers.com'),
   openGraph: {
+    url: 'https://www.unique-organizers.com',
     title: 'Unique Organizers | Elite System Stock',
     description: 'Direct access to high-tier organizational assets. Curated for performance.',
-    url: 'https://unique-organizers.com',
     siteName: 'Unique Organizers',
     images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
     locale: 'en_KE',
@@ -425,7 +426,8 @@ export default async function HomePage(props: {
             <span className="text-2xl font-black tracking-tighter italic text-slate-900">UNIQUE <span className="text-purple-700">ORGANIZERS</span></span>
             <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2">© 2026 - Tumaini House, 5th Floor, Shop Number 4, Next to Cafe Deli, Behind Kencom Building, Nairobi</p>
           </div>
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-4">
+             <a href="https://www.facebook.com/share/1A16M7Hczn/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase text-slate-700 hover:text-purple-600 hover:border-purple-300 transition-all">Facebook Page</a>
              <Link href="/admin/login" className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase text-slate-400 hover:text-purple-600 transition-all"><UserCheck size={14} /> Staff Authorization</Link>
           </div>
         </div>
